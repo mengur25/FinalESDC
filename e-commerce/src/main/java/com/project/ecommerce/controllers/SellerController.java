@@ -63,9 +63,8 @@ public class SellerController {
             verificationCodeRepository.save(verificationCode);
 
             String subject = "Email Verification Code";
-            String text = "Welcome to E-commerce Seller, verify your account using this link: ";
-            String frontendUrl = "http://your-frontend-domain.com/verify-seller?email=" + seller.getEmail() + "&otp=" + otp;
-            emailService.sendVerificationOtpEmail(seller.getEmail(), otp, subject, text + frontendUrl);
+            String text = "Welcome to E-commerce Seller, verify your account using this OTP: " + otp;
+            emailService.sendVerificationOtpEmail(seller.getEmail(), otp, subject, text);
 
             response.setMessage("Seller created successfully! OTP sent to " + seller.getEmail());
             return ResponseEntity.status(HttpStatus.CREATED).body(response);

@@ -30,7 +30,8 @@ public class User {
     @Column(nullable = false)
     private USER_ROLE role = USER_ROLE.ROLE_CUSTOMER;
 
-    @OneToMany
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private Set<Address> addresses= new HashSet<>();
 
     @ManyToMany

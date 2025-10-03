@@ -39,6 +39,13 @@ const LoginForm = () => {
     }
   }, [jwt, role, navigate]);
 
+    useEffect(() => {
+    if (jwt && role === "ROLE_ADMIN") {
+      navigate("/admin");
+      toast.success("Login successful!");
+    }
+  }, [jwt, role, navigate]);
+
   useEffect(() => {
     if (authError) {
       toast.error(authError);

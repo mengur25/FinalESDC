@@ -24,30 +24,33 @@ const categoryThree: {[key: string]:any[]} = {
   home_furniture: furnitureLevelThree,
 };
 
-const CategorySheet = ({selectedCategory, setShowSheet}:any) => {
-  const navigate = useNavigate()
+const CategorySheet = ({ selectedCategory }: { selectedCategory: string }) => {
+  const navigate = useNavigate();
 
-  const childCategory = (category: any, parentCategoryId: any) => {
-    return category.filter(
-      (child: any) => child.parentCategoryId == parentCategoryId
-    );
+  const childCategory = (category: any[], parentCategoryId: any) => {
+    return category.filter((child: any) => child.parentCategoryId == parentCategoryId);
   };
+
   return (
     <Box className="bg-white shadow-lg lg:h-[500px] overflow-y-auto">
-      <div className="flex text-sm flex-wrap  p-4">
+      <div className="flex text-sm flex-wrap p-4">
         {categoryTwo[selectedCategory]?.map((item, index) => (
-          <div className={`p-8 lg:w-[20%] ${index % 2 === 0 ? "bg-slate-50": "bg-white"}`}>
+          <div className={`p-8 lg:w-[20%] ${index % 2 === 0 ? "bg-slate-50" : "bg-white"}`}>
             <p className="text-primary mb-5 font-semibold">{item.name}</p>
             <ul className="space-y-3">
-              {childCategory(categoryThree[selectedCategory], item.categoryId).map(
-                (item: any) => (
-                  <div>
-                    <li onClick={() => navigate("/products/" + item.categoryId)} className="hover:text-primary cursor-pointer">
-                        {item.name}
-                    </li>
-                  </div>
-                )
-              )}
+              {childCategory(categoryThree[selectedCategory], item.categoryId).map((item: any) => (
+                <div>
+                  <li
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate("/products/" + item.categoryId);
+                    }}
+                    className="hover:text-primary cursor-pointer"
+                  >
+                    {item.name}
+                  </li>
+                </div>
+              ))}
             </ul>
           </div>
         ))}

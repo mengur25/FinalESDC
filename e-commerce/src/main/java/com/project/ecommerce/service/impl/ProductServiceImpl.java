@@ -82,6 +82,7 @@ public class ProductServiceImpl implements ProductService {
         product.setCreatedAt(LocalDateTime.now());
         product.setTitle(req.getTitle());
         product.setColor(req.getColor());
+        product.setQuantity(req.getQuantity());
         product.setSellingPrice(req.getSellingPrice());
         product.setImages(req.getImages());
         product.setMrpPrice(req.getMrpPrice());
@@ -113,6 +114,7 @@ public class ProductServiceImpl implements ProductService {
         if (request.getTitle() != null) existingProduct.setTitle(request.getTitle());
         if (request.getDescription() != null) existingProduct.setDescription(request.getDescription());
         if (request.getColor() != null) existingProduct.setColor(request.getColor());
+        if (request.getQuantity() != 0) existingProduct.setQuantity(request.getQuantity());
         if (request.getCategory3() != null) existingProduct.setCategory(request.getCategory3());
         if (request.getSellingPrice() != 0) existingProduct.setSellingPrice(request.getSellingPrice());
         if (request.getMrpPrice() != 0) existingProduct.setMrpPrice(request.getMrpPrice());

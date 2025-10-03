@@ -30,13 +30,25 @@ public class JwtProvider {
                 .compact();
     }
 
-    public String getEmailFromJwtToken(String jwt){
-        jwt = jwt.substring(7);
-        Claims claims = Jwts.parserBuilder().setSigningKey(key).build()
-                .parseClaimsJws(jwt).getBody();
+    public String getEmailFromJwtToken(String jwt) {
+        if (jwt == null || jwt.isBlank()) {
+            throw new IllegalArgumentException("JWT is missing");
+        }
 
-        return String.valueOf(claims.get("email"));
+        // Nếu header có prefix "Bearer " thì cắt ra
+        if (jwt.startsWith("Bearer ")) {
+            jwt = jwt.substring(7);
+        }
+
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(jwt)
+                .getBody();
+
+        return claims.get("email", String.class);
     }
+
 
     private String populateAuthorities(Collection<? extends GrantedAuthority> authorities) {
         Set<String> auths = new HashSet<>();

@@ -6,8 +6,10 @@ import ShopByCategory from "./ShopByCategory/ShopByCategory";
 import banner from "../../../../assets/banner.png";
 import { Button } from "@mui/material";
 import { StorefrontOutlined } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
 
 const Home = () => {
+  const navigate = useNavigate();
   return (
     <>
       <div className="space-y-5 lg:space-y-10 relative">
@@ -31,7 +33,10 @@ const Home = () => {
             <h1>Sell your Product</h1>
             <p className="text-xl md:text-2xl">With <span className="logo">E-commerce</span></p>
             <div className="pt-6 flex">
-              <Button variant="contained" className="!h-[50px]" startIcon={<StorefrontOutlined/>}>  Become a Seller</Button>
+              <Button variant="contained" className="!h-[50px]" startIcon={<StorefrontOutlined/>} 
+                onClick={() => navigate("/become-seller")}
+              
+              >  Become a Seller</Button>
             </div>
           </div>
         </section>

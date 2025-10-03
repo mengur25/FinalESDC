@@ -12,6 +12,7 @@ public class UpdateProductRequest {
     private int mrpPrice;
     private int sellingPrice;
     private String color;
+    private int quantity;
     private List<String> images;
     private Category category;
     private Category category2;

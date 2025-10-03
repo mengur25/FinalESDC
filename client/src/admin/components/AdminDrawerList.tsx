@@ -50,7 +50,7 @@ const menu = [
 const menu2 = [
     {
         name: "Account",
-        path: "/seller/account",
+        path: "/account",
         icon: <AccountBox className='text-primary'/>,
         activeIcon: <AccountBox className='text-white'/>,
     },

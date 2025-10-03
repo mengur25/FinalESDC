@@ -125,23 +125,7 @@ const BecomeSellerFormStep2 = ({ formik }: any) => {
             }
           />
         </Grid2>
-        <Grid2 size={{ xs: 6 }}>
-          <TextField
-            fullWidth
-            name="pickupAddress.state"
-            label="State"
-            value={formik.values.pickupAddress.state}
-            onChange={formik.handleChange}
-            error={
-              formik.touched.pickupAddress?.state &&
-              Boolean(formik.errors.pickupAddress?.state)
-            }
-            helperText={
-              formik.touched.pickupAddress?.state &&
-              formik.errors.pickupAddress?.state
-            }
-          />
-        </Grid2>
+        
       </Grid2>
     </Box>
   );

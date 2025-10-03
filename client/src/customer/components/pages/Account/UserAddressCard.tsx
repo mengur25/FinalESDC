@@ -1,21 +1,60 @@
-import { Radio } from '@mui/material'
-import React from 'react'
+import React from "react";
+import { Button, IconButton, Radio } from "@mui/material";
+import { Edit } from "@mui/icons-material";
 
-const UserAddressCard = () => {
-  return (
-    <div className='p-5 border rounded-md flex'>
-        <div>
-<Radio checked={false} value="" name='radio-button'/>
-        </div>
-        <div className="space-y-3 pt-3">
-            <h1>Nguyen</h1>
-            <p className='w-[320px]'>
-                19 Nguyen Huu Tho, Tan Hung, Ho Chi Minh City
-            </p>
-            <p><strong>Mobile: </strong>0896857093</p>
-        </div>
-    </div>
-  )
+interface UserAddressCardProps {
+  address: any;
+  selected: boolean;
+  onSelect: () => void;
+  onEdit: (address: any) => void;
 }
 
-export default UserAddressCard
+const UserAddressCard: React.FC<UserAddressCardProps> = ({
+  address,
+  selected,
+  onSelect,
+  onEdit,
+}) => {
+  if (!address) return null;
+
+  return (
+    <div className="flex items-center gap-3 w-full" onClick={onSelect}>
+      <Radio checked={selected} value={address.id} />
+
+      <div
+        className={`p-4 border w-full rounded-md flex items-start justify-between cursor-pointer ${
+          selected ? "border-blue-500" : "border-gray-300"
+        }`}
+      >
+        <div className="flex flex-col justify-between">
+          <h1 className="font-bold">{address.name || "No Name"}</h1>
+
+          <p>
+            {address.address}, {address.city}
+          </p>
+
+          <p>
+            <strong>Mobile:</strong> {address.mobile}
+          </p>
+
+          {address.selected && (
+            <p className="text-sm text-blue-500 font-medium">Default Address</p>
+          )}
+        </div>
+
+        <Button
+          color="primary"
+          size="small"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(address);
+          }}
+        >
+          Edit
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+export default UserAddressCard;

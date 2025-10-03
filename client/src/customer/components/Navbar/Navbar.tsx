@@ -6,7 +6,7 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import MenuIcon from "@mui/icons-material/Menu";
 import {
   FavoriteBorder,
@@ -25,6 +25,8 @@ const Navbar = () => {
   const [selectedCategory, setSelectedCategory] = useState("men");
   const [showCategorySheet, setShowCategorySheet] = useState(false);
   const navigate = useNavigate();
+  const timeoutIdRef = useRef<NodeJS.Timeout | null>(null);
+
   const { auth } = useAppSelector((store) => store);
   return (
     <>
@@ -46,10 +48,18 @@ const Navbar = () => {
           <ul className="flex items-center font-medium text-gray-800">
             {mainCategory.map((item) => (
               <li
-                onMouseLeave={() => {
-                  setShowCategorySheet(false);
+                onMouseLeave={(e) => {
+                  e.stopPropagation();
+                  timeoutIdRef.current = setTimeout(() => {
+                    setShowCategorySheet(false);
+                  }, 10000);
                 }}
-                onMouseEnter={() => {
+                onMouseEnter={(e) => {
+                  e.stopPropagation();
+                  console.log("Mouse entered");
+                  if (timeoutIdRef.current) {
+                    clearTimeout(timeoutIdRef.current);
+                  }
                   setShowCategorySheet(true);
                   setSelectedCategory(item.categoryId);
                 }}

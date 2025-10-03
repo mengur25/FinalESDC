@@ -67,6 +67,7 @@ export default function ProductTable() {
             <StyledTableCell align="right">MRP</StyledTableCell>
             <StyledTableCell align="right">Selling Price</StyledTableCell>
             <StyledTableCell align="right">Color</StyledTableCell>
+            <StyledTableCell align="right">In stock</StyledTableCell>
             <StyledTableCell align="right">Update Stock</StyledTableCell>
             <StyledTableCell align="right">Update</StyledTableCell>
           </TableRow>
@@ -91,6 +92,7 @@ export default function ProductTable() {
                 {item.sellingPrice}
               </StyledTableCell>
               <StyledTableCell align="right">{item.color}</StyledTableCell>
+              <StyledTableCell align="right">{item.quantity}</StyledTableCell>
               <StyledTableCell align="right">
                 {<Button size="small">in_stock</Button>}
               </StyledTableCell>

@@ -11,6 +11,9 @@ import com.project.ecommerce.service.CartService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+
 @Service
 @RequiredArgsConstructor
 public class CartServiceImpl implements CartService {
@@ -47,25 +50,41 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public Cart findUserCart(User user) {
+        // Tìm cart của user
         Cart cart = cartRepository.findByUserId(user.getId());
 
+        // Nếu chưa có thì tạo mới
+        if (cart == null) {
+            cart = new Cart();
+            cart.setUser(user);
+            cart.setCartItems(new HashSet<>());
+            cart.setTotalMrpPrice(0);
+            cart.setTotalSellingPrice(0);
+            cart.setDiscount(0);
+            cart.setTotalItem(0);
+            cart = cartRepository.save(cart);
+        }
+
+        // Tính toán tổng
         int totalPrice = 0;
         int totalDiscountedPrice = 0;
         int totalItem = 0;
 
-        for(CartItem cartItem: cart.getCartItems()){
-            totalPrice+=cartItem.getMrpPrice();
-            totalDiscountedPrice+=cartItem.getSellingPrice();
-            totalItem+=cartItem.getQuantity();
+        for (CartItem cartItem : cart.getCartItems()) {
+            totalPrice += cartItem.getMrpPrice();
+            totalDiscountedPrice += cartItem.getSellingPrice();
+            totalItem += cartItem.getQuantity();
         }
 
+        // Gán lại giá trị
         cart.setTotalMrpPrice(totalPrice);
-        cart.setTotalItem(totalItem);
         cart.setTotalSellingPrice(totalDiscountedPrice);
         cart.setDiscount(calculateDiscountPercentage(totalPrice, totalDiscountedPrice));
         cart.setTotalItem(totalItem);
+
         return cart;
     }
+
 
     private int calculateDiscountPercentage(int mrpPrice, int sellingPrice) {
         if (mrpPrice < 0 || sellingPrice < 0) {

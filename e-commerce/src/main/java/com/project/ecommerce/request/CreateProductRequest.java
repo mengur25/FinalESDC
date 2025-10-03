@@ -12,6 +12,7 @@ public class CreateProductRequest {
     private int mrpPrice;
     private int sellingPrice;
     private String color;
+    private int quantity;
     private List<String> images;
     @JsonProperty("category")
     private String category;

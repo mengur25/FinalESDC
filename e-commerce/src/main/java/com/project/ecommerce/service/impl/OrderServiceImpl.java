@@ -3,10 +3,10 @@ package com.project.ecommerce.service.impl;
 import com.project.ecommerce.domain.OrderStatus;
 import com.project.ecommerce.domain.PaymentStatus;
 import com.project.ecommerce.model.*;
-import com.project.ecommerce.repository.AddressRepository;
-import com.project.ecommerce.repository.OrderItemRepository;
-import com.project.ecommerce.repository.OrderRepository;
+import com.project.ecommerce.repository.*;
+import com.project.ecommerce.service.AddressService;
 import com.project.ecommerce.service.OrderService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,40 +19,68 @@ public class OrderServiceImpl implements OrderService {
     private final AddressRepository addressRepository;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
+    private final AddressService addressService;
+    private final CartRepository cartRepository;
+    private final CartItemRepository cartItemRepository;
+
 
     @Override
+    @Transactional
     public Set<Order> createOrder(User user, Address shippingAddress, Cart cart) {
-        if(!user.getAddresses().contains(shippingAddress)){
-            user.getAddresses().add(shippingAddress);
+
+
+        Address savedAddress = addressRepository.save(shippingAddress);
+
+
+        boolean addressExistsForUser = addressService.addressExistsInUserAddresses(savedAddress.getId(), user.getId());
+
+        if (!addressExistsForUser) {
+
+            user.getAddresses().add(savedAddress);
+
         }
-        Address address = addressRepository.save(shippingAddress);
+
+        Address finalShippingAddress = savedAddress;
+
         Map<Long, List<CartItem>> itemsBySeller= cart.getCartItems().stream()
                 .collect(Collectors.groupingBy(item -> item.getProduct()
                         .getSeller().getId()));
 
         Set<Order> orders = new HashSet<>();
+        List<CartItem> purchasedCartItems = new ArrayList<>();
 
         for(Map.Entry<Long, List<CartItem>> entry: itemsBySeller.entrySet()){
             Long sellerId = entry.getKey();
             List<CartItem> items = entry.getValue();
 
+            // Tính tổng giá dựa trên giá bán (Selling Price)
             int totalOrderPrice = items.stream().mapToInt(
                     CartItem::getSellingPrice
             ).sum();
+
+            // Tính tổng MRP Price (nếu cần)
+            int totalMrpPrice = items.stream().mapToInt(
+                    CartItem::getMrpPrice
+            ).sum();
+
             int totalItem = items.stream().mapToInt(CartItem::getQuantity).sum();
 
             Order createdOrder = new Order();
             createdOrder.setUser(user);
             createdOrder.setSellerId(sellerId);
-            createdOrder.setTotalMrpPrice(totalOrderPrice);
-            createdOrder.setTotalSellingPrice(totalOrderPrice);
+
+            // Đặt TotalMrpPrice và TotalSellingPrice chính xác
+            createdOrder.setTotalMrpPrice(totalMrpPrice);
+            createdOrder.setTotalSellingPrice(totalOrderPrice); // Sử dụng Selling Price cho giá cuối cùng
+
             createdOrder.setTotalItem(totalItem);
-            createdOrder.setShippingAddress(address);
+            createdOrder.setShippingAddress(finalShippingAddress);
             createdOrder.setOrderStatus(OrderStatus.PENDING);
             createdOrder.getPaymentDetails().setStatus(PaymentStatus.PENDING);
 
             Order savedOrder = orderRepository.save(createdOrder);
             orders.add(savedOrder);
+
 
             List<OrderItem> orderItems = new ArrayList<>();
             for(CartItem item: items){
@@ -64,14 +92,24 @@ public class OrderServiceImpl implements OrderService {
                 orderItem.setSize(item.getSize());
                 orderItem.setUserId(item.getUserId());
                 orderItem.setSellingPrice(item.getSellingPrice());
+
                 savedOrder.getOrderItems().add(orderItem);
 
                 OrderItem savedOrderItem= orderItemRepository.save(orderItem);
                 orderItems.add(savedOrderItem);
+                purchasedCartItems.add(item);
             }
+        }
+
+        cart.getCartItems().removeAll(purchasedCartItems);
+        cartRepository.save(cart);
+        if (!purchasedCartItems.isEmpty()) {
+            cartItemRepository.deleteAll(purchasedCartItems);
         }
         return orders;
     }
+
+
 
     @Override
     public Order findOrderById(Long id) throws Exception {

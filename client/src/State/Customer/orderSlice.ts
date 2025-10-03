@@ -54,16 +54,22 @@ export const fetchOrderById = createAsyncThunk<
 
 export const createOrder = createAsyncThunk<
   any,
-  { address: Address; jwt: string; paymentGateway: string }
+  { addressId: number; jwt: string; paymentGateway: string }
 >(
   "orders/createOrder",
-  async ({ address, jwt, paymentGateway }, { rejectWithValue }) => {
+  async ({ addressId, jwt, paymentGateway }, { rejectWithValue }) => {
     try {
-      const response = await api.post<any>(API_URL, address, {
+      const payload = {
+        addressId, // chỉ gửi id thôi
+        paymentMethod: paymentGateway, // enum bên BE (RAZORPAY, STRIPE, ...)
+      };
+
+      const response = await api.post<any>(API_URL, payload, {
         headers: { Authorization: `Bearer ${jwt}` },
-        params: { paymentMethod: paymentGateway },
       });
+
       console.log("order created:", response.data);
+
       if (response.data.payment_link_url) {
         window.location.href = response.data.payment_link_url;
       }
@@ -71,11 +77,12 @@ export const createOrder = createAsyncThunk<
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
-        error.response.data.error || "Failed to create order"
+        error.response?.data?.error || "Failed to create order"
       );
     }
   }
 );
+
 
 export const fetchOrderItemById = createAsyncThunk<
   OrderItem,
