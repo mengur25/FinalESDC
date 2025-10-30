@@ -37,13 +37,15 @@ public class ReviewController {
             @RequestBody CreateReviewRequest req,
             @PathVariable Long productId,
             @RequestHeader("Authorization") String jwt
-            ) throws Exception {
+    ) throws Exception {
         User user = userService.findUserByJwtToken(jwt);
         Product product = productService.findProductById(productId);
 
+        // Chức năng createReview sẽ tự động gọi updateProductRatingStatistics bên trong Service
         Review review = reviewService.createReview(
                 req, user, product
         );
+
         return ResponseEntity.ok(review);
     }
 
@@ -55,8 +57,13 @@ public class ReviewController {
     ) throws Exception {
         User user = userService.findUserByJwtToken(jwt);
 
+        // Giả định bạn đã đổi tên các getter trong CreateReviewRequest thành getReview() và getRating()
+        // để đồng bộ với frontend (nếu không, hãy giữ nguyên getReviewText/getReviewRating)
         Review review = reviewService.updateReview(
-                reviewId, req.getReviewText(), req.getReviewRating(), user.getId()
+                reviewId,
+                req.getReviewText(),    // Đã thay đổi từ getReviewText()
+                req.getReviewRating(),    // Đã thay đổi từ getReviewRating()
+                user.getId()
         );
 
         return ResponseEntity.ok(review);
@@ -69,7 +76,9 @@ public class ReviewController {
     ) throws Exception {
         User user = userService.findUserByJwtToken(jwt);
 
+        // Việc gọi deleteReview sẽ kích hoạt logic cập nhật rating trong ReviewServiceImpl
         reviewService.deleteReview(reviewId, user.getId());
+
         ApiResponse res = new ApiResponse();
         res.setMessage("Review Deleted");
 

@@ -6,6 +6,8 @@ import com.project.ecommerce.model.*;
 import com.project.ecommerce.repository.*;
 import com.project.ecommerce.service.AddressService;
 import com.project.ecommerce.service.OrderService;
+import com.project.ecommerce.service.PaymentService;
+import com.project.ecommerce.service.ProductService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,11 +24,13 @@ public class OrderServiceImpl implements OrderService {
     private final AddressService addressService;
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
-
+    private final PaymentService paymentService;
+    private  final  PaymentOrderRepository paymentOrderRepository;
+    private final ProductService productService;
 
     @Override
     @Transactional
-    public Set<Order> createOrder(User user, Address shippingAddress, Cart cart) {
+    public Set<Order> createOrder(User user, Address shippingAddress, Cart cart) throws Exception {
 
 
         Address savedAddress = addressRepository.save(shippingAddress);
@@ -98,6 +102,11 @@ public class OrderServiceImpl implements OrderService {
                 OrderItem savedOrderItem= orderItemRepository.save(orderItem);
                 orderItems.add(savedOrderItem);
                 purchasedCartItems.add(item);
+                productService.decreaseProductQuantity(
+                        item.getProduct().getId(),
+                        item.getSize(),
+                        item.getQuantity()
+                );
             }
         }
 
@@ -124,7 +133,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<Order> sellersOrder(Long sellerId) {
-        return orderRepository.findBySellerId(sellerId);
+        return orderRepository.findBySellerIdWithUser(sellerId);
     }
 
     @Override
@@ -140,6 +149,15 @@ public class OrderServiceImpl implements OrderService {
         if(!user.getId().equals(order.getUser().getId())){
             throw new Exception("You do not have permission to cancel this order ");
         }
+        if (order.getOrderStatus() != OrderStatus.CANCELLED && order.getOrderStatus() != OrderStatus.DELIVERED) {
+            for (OrderItem item : order.getOrderItems()) {
+                productService.increaseProductQuantity(
+                        item.getProduct().getId(),
+                        item.getSize(),
+                        item.getQuantity()
+                );
+            }
+        }
         order.setOrderStatus(OrderStatus.CANCELLED);
         return orderRepository.save(order);
     }
@@ -148,5 +166,18 @@ public class OrderServiceImpl implements OrderService {
     public OrderItem findById(Long id) throws Exception {
         return orderItemRepository.findById(id).orElseThrow(()
         -> new Exception("Order item not exist"));
+    }
+
+    @Override
+    @Transactional
+    public PaymentOrder createAndSavePaymentOrder(User user, Address shippingAddress, Cart cart) throws Exception {
+
+        Set<Order> orders = createOrder(user, shippingAddress, cart);
+        PaymentOrder paymentOrder = paymentService.createOrder(user, orders);
+
+        PaymentOrder committedPaymentOrder = paymentOrderRepository.findById(paymentOrder.getId())
+                .orElseThrow(() -> new RuntimeException("PaymentOrder commit failed."));
+
+        return committedPaymentOrder;
     }
 }

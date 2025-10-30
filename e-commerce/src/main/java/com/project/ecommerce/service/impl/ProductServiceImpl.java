@@ -3,6 +3,7 @@ package com.project.ecommerce.service.impl;
 import com.project.ecommerce.exceptions.ProductException;
 import com.project.ecommerce.model.Category;
 import com.project.ecommerce.model.Product;
+import com.project.ecommerce.model.Review;
 import com.project.ecommerce.model.Seller;
 import com.project.ecommerce.repository.CategoryRepository;
 import com.project.ecommerce.repository.ProductRepository;
@@ -34,12 +35,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Product createProduct(CreateProductRequest req, Seller seller) {
-        System.out.println("Received request: " + req); // Log toàn bộ request
-        System.out.println("Category: " + req.getCategory());
-        System.out.println("Category2: " + req.getCategory2());
-        System.out.println("Category3: " + req.getCategory3());
-        System.out.println("Received req in Service: " + req);
-        System.out.println("Category in Service: " + req.getCategory());
+
         Category category1 = categoryRepository.findByCategoryId(req.getCategory());
 
         if (category1 == null) {
@@ -188,5 +184,59 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public List<Product> getProductBySeller(Long sellerId) {
         return productRepository.findBySellerId(sellerId);
+    }
+
+
+    @Override
+    public Product updateProductRatingStatistics(Product product) {
+        // Lấy danh sách reviews hiện tại của sản phẩm
+        List<Review> reviews = product.getReviews();
+
+        // Cập nhật số lượng rating
+        int totalRatings = reviews.size();
+        product.setNumRatings(totalRatings);
+
+        if (totalRatings > 0) {
+            double totalScore = 0;
+            for (Review review : reviews) {
+                totalScore += review.getRating();
+            }
+
+            // Tính rating trung bình
+            double averageRating = totalScore / totalRatings;
+
+            // Cập nhật rating trung bình (có thể làm tròn 1 chữ số thập phân)
+            int roundedRating =  (int) (Math.round(averageRating * 10.0) / 10.0);
+            product.setNumRatings(roundedRating);
+        } else {
+            // Nếu không có review nào
+            product.setNumRatings(0);
+        }
+
+        // Lưu sản phẩm đã cập nhật vào database
+        return productRepository.save(product);
+    }
+
+    @Override
+    public void decreaseProductQuantity(Long productId, String size, int quantity) throws Exception {
+
+        Product product = findProductById(productId);
+
+        if (product.getQuantity() < quantity) {
+            throw new Exception("Not enough stock for product: " + product.getTitle() + " (ID: " + productId + ")");
+        }
+
+        product.setQuantity(product.getQuantity() - quantity);
+
+        productRepository.save(product);
+    }
+
+    @Override
+    public void increaseProductQuantity(Long productId, String size, int quantity) throws ProductException {
+        Product product = findProductById(productId);
+
+        product.setQuantity(product.getQuantity() + quantity);
+
+        productRepository.save(product);
     }
 }

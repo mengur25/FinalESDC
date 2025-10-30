@@ -42,16 +42,14 @@ const ProductCard = ({ item }: { item: Product }) => {
     return () => clearInterval(interval);
   }, [isHoverd]);
 
-  const handleWishlist = (e:any) =>{
+  const handleWishlist = (e: any) => {
     e.stopPropagation();
-   item.id && dispatch(addProductToWishlist({productId: item.id}))
-  }
+    item.id && dispatch(addProductToWishlist({ productId: item.id }));
+  };
 
   return (
     <>
-      <div
-        className="group px-4 relative"
-      >
+      <div className="group px-4 relative">
         <div
           className="card"
           onMouseEnter={() => setIsHovered(true)}
@@ -61,8 +59,7 @@ const ProductCard = ({ item }: { item: Product }) => {
             <img
               className="card-media object-top"
               src={image}
-        onClick={() => navigate(getProductUrl(item))}
-
+              onClick={() => navigate(getProductUrl(item))}
               style={{
                 transform: `translateX(${(index - currentImage) * 100}%)`,
               }}
@@ -72,7 +69,11 @@ const ProductCard = ({ item }: { item: Product }) => {
           {isHoverd && (
             <div className="indicator flex flex-col items-center space-y-2">
               <div className="flex gap-3">
-                <Button onClick={handleWishlist} variant="contained" color="secondary">
+                <Button
+                  onClick={handleWishlist}
+                  variant="contained"
+                  color="secondary"
+                >
                   <Favorite sx={{ color: teal[500] }} />
                 </Button>
 

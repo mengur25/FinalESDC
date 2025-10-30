@@ -31,6 +31,7 @@ export interface Order {
 
 export enum OrderStatus {
   PENDING = "PENDING",
+  PLACED = "PLACED",
   SHIPPED = "SHIPPED",
   DELIVERED = "DELIVERED",
   CANCELLED = "CANCELLED",

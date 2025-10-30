@@ -19,3 +19,15 @@ export interface CouponState {
     couponCreated: boolean;
     couponApplied: boolean;
 }
+
+export interface CreateCouponRequest {
+    
+    code:string;
+    discountPercentage:number;
+    
+    validityStartDate?: string; 
+    validityEndDate?: string;
+    
+    minimumOrderValue: number;
+    
+}

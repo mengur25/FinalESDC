@@ -41,6 +41,24 @@ export const createProduct = createAsyncThunk<Product, {request:any, jwt:string 
     }
 )
 
+export const updateProductDetails = createAsyncThunk<
+    Product,
+    { productId: number; productData: Partial<Product> }, 
+    { rejectValue: string }
+>(
+    'sellerProduct/updateProductDetails',
+    async ({ productId, productData }, { rejectWithValue }) => {
+        try {
+            const response = await api.put(`/api/seller/products/${productId}`, productData);
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || "Failed to update product details");
+        }
+    }
+);
+
+
+
 interface SellerProductState{
     products: Product[];
     loading:boolean;

@@ -1,26 +1,72 @@
-import React from 'react'
-import HomeCategoryTable from './HomeCategoryTable'
-import { useFormik } from 'formik'
-import { HomeCategory } from '../../../types/HomeCatgoryTypes'
-import store, { useAppSelector } from '../../../State/Store'
+import React, { useState, useEffect } from 'react';
+import HomeCategoryTable from './HomeCategoryTable';
+import { useFormik } from 'formik';
+import { HomeCategory } from '../../../types/HomeCatgoryTypes';
+import { useAppDispatch, useAppSelector } from '../../../State/Store';
+import UpdateHomeCategoryModal from './UpdateHomeCategoryModal';
+import { fetchHomeCategory } from '../../../State/Admin/adminSlice';
 
 const DealCategoryTable = () => {
-        const {customer} = useAppSelector(store => store);
+    const dispatch = useAppDispatch();
+    const { customer } = useAppSelector((store: any) => store);
+    const { categoryUpdated } = useAppSelector((store: any) => store.homeCategory);
+
+    const [openModal, setOpenModal] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState<HomeCategory | null>(null);
     
+    const tableData: HomeCategory[] = customer.homePageData?.dealCategories as HomeCategory[] || [];
+
     const formik = useFormik({
-        initialValues:{
+        initialValues: {
             discount: 0,
             category: "",
         },
-        onSubmit:(values)=>{
-            console.log("submit", values)
+        onSubmit: (values) => {
+            console.log("submit deal form", values);
         }
-    })
-  return (
-    <div>
-        <HomeCategoryTable data={customer.homePageData?.dealCategories  as HomeCategory[]} />
-    </div>
-  )
-}
+    });
 
-export default DealCategoryTable
+    const handleEditClick = (category: HomeCategory) => {
+        setSelectedCategory(category);
+        setOpenModal(true);
+    };
+
+    const handleModalClose = () => {
+        setOpenModal(false);
+        setSelectedCategory(null);
+    };
+
+    const handleUpdateSuccess = () => {
+        // Tải lại dữ liệu sau khi cập nhật thành công
+        dispatch(fetchHomeCategory());
+    };
+
+    useEffect(() => {
+        if (categoryUpdated) {
+            handleUpdateSuccess();
+        }
+    }, [categoryUpdated]);
+
+    return (
+        <div>
+            <h2>Deal Categories Management</h2>
+            {/* Nếu bạn có form tạo deal, nó có thể ở đây */}
+
+            <HomeCategoryTable 
+                data={tableData} 
+                onEdit={handleEditClick} 
+            />
+
+            {selectedCategory && (
+                <UpdateHomeCategoryModal
+                    open={openModal}
+                    onClose={handleModalClose}
+                    categoryToEdit={selectedCategory}
+                    onSuccess={handleModalClose}
+                />
+            )}
+        </div>
+    );
+};
+
+export default DealCategoryTable;

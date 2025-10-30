@@ -65,7 +65,7 @@ export const homeCategories = [
 
   // SHOP_BY_CATEGORIES
   {
-    categoryId: "mens_clothing",
+    categoryId: "Jackets",
     section: "SHOP_BY_CATEGORIES",
     name: "Men's Clothing",
     image: "https://rukminim2.flixcart.com/image/312/312/mens-clothing.jpg",

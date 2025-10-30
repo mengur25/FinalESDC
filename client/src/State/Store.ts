@@ -3,7 +3,7 @@ import { useDispatch, useSelector, TypedUseSelectorHook } from "react-redux";
 import reducer from "./AuthSlice";
 import sellerProductSlice from "./Seller/sellerProductSlice";
 import productSlice from "./Customer/ProductSlice";
-import SellerSlice from "./Seller/SellerSlice";
+import sellerSlice from "./Seller/SellerSlice";
 import sellerOrderSlice from "./Seller/sellerOrderSlice";
 import cartSlice from './Customer/cartSlice';
 import orderSlice from './Customer/orderSlice';
@@ -13,9 +13,12 @@ import adminSlice from './Admin/adminSlice';
 import dealSlice from './Admin/dealSlice';
 import customerSlice from './Customer/customerSlice';
 import addressSlice from './Customer/AddressSlice';
+import couponSlice from './Customer/couponSlice';
+import homeCategorySlice from './Admin/adminSlice';
+import reviewSlice from './Customer/ReviewSlice';
 
 const rootReducer = combineReducers({
-  seller: SellerSlice,
+  homeCategory: homeCategorySlice,
   auth: reducer,
   sellerProduct: sellerProductSlice,
   product: productSlice,
@@ -28,6 +31,9 @@ const rootReducer = combineReducers({
   customer: customerSlice,
   deal: dealSlice,
   address: addressSlice,
+  seller: sellerSlice,
+  coupon: couponSlice,
+  review: reviewSlice,
 });
 
 const store = configureStore({

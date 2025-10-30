@@ -3,6 +3,7 @@ package com.project.ecommerce.service.impl;
 import com.project.ecommerce.model.Order;
 import com.project.ecommerce.model.Seller;
 import com.project.ecommerce.model.Transaction;
+import com.project.ecommerce.model.User;
 import com.project.ecommerce.repository.SellerRepository;
 import com.project.ecommerce.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,12 +19,20 @@ public class TransactionService implements com.project.ecommerce.service.Transac
 
     @Override
     public Transaction createTransaction(Order order) {
-        Seller seller = sellerRepository.findById(order.getSellerId()).get();
+        Long sellerId = order.getSellerId();
+        Seller seller = sellerRepository.findById(sellerId)
+                .orElseThrow(() -> new RuntimeException("Seller not found for order ID " + order.getId()));
+
+        User customer = order.getUser();
+        if (customer == null) {
+            throw new RuntimeException("Customer (User) data is missing from the order object.");
+        }
 
         Transaction transaction = new Transaction();
         transaction.setSeller(seller);
-        transaction.setCustomer(order.getUser());
+        transaction.setCustomer(customer);
         transaction.setOrder(order);
+
         return transactionRepository.save(transaction);
     }
 

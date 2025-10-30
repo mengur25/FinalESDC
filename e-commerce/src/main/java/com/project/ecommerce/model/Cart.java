@@ -1,6 +1,7 @@
 package com.project.ecommerce.model;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -18,6 +19,7 @@ public class Cart {
     private Long id;
 
     @OneToOne
+    @JsonIgnore
     private User user;
 
     @OneToMany(mappedBy = "cart", cascade =CascadeType.ALL, orphanRemoval = true)

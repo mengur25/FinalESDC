@@ -20,9 +20,13 @@ export const fetchProductById = createAsyncThunk<Product, Number>(
   }
 );
 
-export const searchProduct = createAsyncThunk(
+export const searchProduct = createAsyncThunk<
+  any,
+  string,
+  { rejectValue: string } 
+>(
   "products/searchProduct",
-  async (query, { rejectWithValue }) => {
+  async (query, { rejectWithValue }) => { 
     try {
       const response = await api.get(`${API_URL}/search`, {
         params: {
@@ -35,7 +39,7 @@ export const searchProduct = createAsyncThunk(
       return data;
     } catch (error: any) {
       console.log("error: " + error.message);
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.message || "Something went wrong"); 
     }
   }
 );

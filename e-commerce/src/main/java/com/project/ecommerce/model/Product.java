@@ -1,6 +1,8 @@
 package com.project.ecommerce.model;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -14,6 +16,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "reviews"})
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -34,6 +37,7 @@ public class Product {
     private Category category;
 
     @ManyToOne
+    @JsonIgnore
     private Seller seller;
     private LocalDateTime createdAt;
 

@@ -130,16 +130,19 @@ export const paymentSuccess = createAsyncThunk<
   }
 );
 
-export const cancelOrder = createAsyncThunk<Order, any>(
+export const cancelOrder = createAsyncThunk<
+  Order,
+  { orderId: number | string; jwt: string } 
+>(
   "orders/cancelOrder",
-  async (orderId, { rejectWithValue }) => {
+  async ({ orderId, jwt }, { rejectWithValue }) => {
     try {
       const response = await api.put(
-        `${API_URL}/${orderId}/cancel`,
+        `${API_URL}/${orderId}/cancel`, 
         {},
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("jwt")}`,
+            Authorization: `Bearer ${jwt}`,
           },
         }
       );

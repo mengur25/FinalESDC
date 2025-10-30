@@ -117,7 +117,7 @@ const PageDetails = () => {
             </p>
           </div>
           <div className="mt-7 space-y-5">
-            <ReviewCard />
+            {/* <ReviewCard /> */}
             <Divider/>
           </div>
         </section>
@@ -126,7 +126,7 @@ const PageDetails = () => {
       <div className="mt-20">
         <h1 className="text-lg font-bold">Similar Product</h1>
         <div className="pt-5">
-          <SimilarProduct />
+          {/* <SimilarProduct /> */}
         </div>
       </div>
     </div>

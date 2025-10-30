@@ -1,11 +1,10 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { Order } from "../../types/orderTypes";
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { Order } from "../../types/orderTypes"; // Đảm bảo import Order
 import { Transaction } from "../../types/TransactionType";
-import { User } from "../../types/UserType";
 import { api } from "../../config/Api";
 
 interface TransactionState {
-  transactions: Transaction[];
+  transactions: any[]; 
   transaction: Transaction | null;
   loading: boolean;
   error: string | null;
@@ -19,24 +18,23 @@ const initialState: TransactionState = {
 };
 
 export const fetchTransactionsBySeller = createAsyncThunk<
-  Transaction[],
+  Order[],
   string,
   { rejectValue: string }
 >(
   "transactions/fetchTransactionsBySeller",
   async (jwt, { rejectWithValue }) => {
     try {
-      const response = await api.get("/api/transactions/seller", {
+      const response = await api.get("/api/seller/orders", { 
         headers: { Authorization: `Bearer ${jwt}` },
       });
-
-      console.log("fetchTransactionsBySeller ", response.data);
-      return response.data;
+      return response.data; 
+      
     } catch (error: any) {
       if (error.response) {
         return rejectWithValue(error.response.data.message);
       }
-      return rejectWithValue("Failed to fetch transaction");
+      return rejectWithValue("Failed to fetch order history for seller");
     }
   }
 );
@@ -50,8 +48,6 @@ export const fetchAllTransactions = createAsyncThunk<
   async (_, { rejectWithValue }) => {
     try {
       const response = await api.get("/api/transactions");
-
-      console.log("fetchTransactionsBySeller ", response.data);
       return response.data;
     } catch (error: any) {
       if (error.response) {
@@ -68,29 +64,28 @@ const transactionSlice = createSlice({
     reducers: {},
     extraReducers: (builder) =>{
         builder
-        .addCase(fetchTransactionsBySeller.pending, (state) =>{
+        .addCase(fetchTransactionsBySeller.pending, (state) => {
             state.loading = true;
             state.error = null;
         })
-        .addCase(fetchTransactionsBySeller.fulfilled, (state, action) =>{
+        .addCase(fetchTransactionsBySeller.fulfilled, (state, action: PayloadAction<Order[]>) => {
             state.loading = false;
-            state.transactions = action.payload;
+            state.transactions = action.payload; 
         })
-        .addCase(fetchTransactionsBySeller.rejected, (state, action) =>{
+        .addCase(fetchTransactionsBySeller.rejected, (state, action) => {
             state.loading = false;
             state.error = action.payload as string;
         })
 
-
-        .addCase(fetchAllTransactions.pending, (state) =>{
+        .addCase(fetchAllTransactions.pending, (state) => {
             state.loading = true;
             state.error = null;
         })
-        .addCase(fetchAllTransactions.fulfilled, (state, action) =>{
+        .addCase(fetchAllTransactions.fulfilled, (state, action: PayloadAction<Transaction[]>) => {
             state.loading = false;
-            state.transactions = action.payload;
+            state.transactions = action.payload; 
         })
-        .addCase(fetchAllTransactions.rejected, (state, action) =>{
+        .addCase(fetchAllTransactions.rejected, (state, action) => {
             state.loading = false;
             state.error = action.payload as string;
         })

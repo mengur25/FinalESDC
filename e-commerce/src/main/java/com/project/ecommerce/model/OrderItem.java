@@ -15,8 +15,8 @@ public class OrderItem {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @JsonIgnore
     @ManyToOne
+    @JsonIgnore
     private Order order;
 
     @ManyToOne

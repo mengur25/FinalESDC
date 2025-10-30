@@ -29,4 +29,8 @@ public interface ProductService {
             Integer pageNumber
     );
     List<Product> getProductBySeller(Long sellerId);
+    Product updateProductRatingStatistics(Product product);
+    void decreaseProductQuantity(Long productId, String size, int quantity) throws Exception;
+
+    void increaseProductQuantity(Long productId, String size, int quantity);
 }

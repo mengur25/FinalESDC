@@ -42,3 +42,5 @@ export interface SellerReport{
     canceledOrders: number;
     totalTransactions: number;
 }
+
+export type AccountStatus = "PENDING_VERIFICATION" | "ACTIVE" | "SUSPENDED" | "DEACTIVATED" | "BANNED" | "CLOSED";

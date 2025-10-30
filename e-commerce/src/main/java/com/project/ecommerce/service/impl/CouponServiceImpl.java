@@ -6,6 +6,7 @@ import com.project.ecommerce.model.User;
 import com.project.ecommerce.repository.CartRepository;
 import com.project.ecommerce.repository.CouponRepository;
 import com.project.ecommerce.repository.UserRepository;
+import com.project.ecommerce.service.CartService;
 import com.project.ecommerce.service.CouponService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,11 +21,18 @@ public class CouponServiceImpl implements CouponService {
     private final CouponRepository couponRepository;
     private final CartRepository cartRepository;
     private final UserRepository userRepository;
+    private final CartService cartService;
+
+    private double calculateInitialSellingPrice(Cart cart) {
+        return cart.getCartItems().stream()
+                .mapToDouble(item -> item.getSellingPrice())
+                .sum();
+    }
 
     @Override
     public Cart applyCoupon(String code, double orderValue, User user) throws Exception {
         Coupon coupon = couponRepository.findByCode(code);
-        Cart cart = cartRepository.findByUserId(user.getId());
+        Cart cart = cartService.findUserCart(user);
 
         if (coupon == null) {
             throw new Exception("Coupon not valid");
@@ -33,34 +41,42 @@ public class CouponServiceImpl implements CouponService {
             throw new Exception("Coupon already used");
         }
         if (orderValue < coupon.getMinimumOrderValue()) {
-            throw new Exception("Order value is lower than coupon price" + coupon.getMinimumOrderValue());
+            throw new Exception("Order value is lower than coupon price " + coupon.getMinimumOrderValue());
         }
+
+        double initialSellingPrice = calculateInitialSellingPrice(cart);
+        cart.setTotalSellingPrice((int) initialSellingPrice);
+        cart.setCouponCode(null);
+        LocalDate today = LocalDate.now();
+
         if (coupon.isActive() &&
-                LocalDate.now().isAfter(coupon.getValidityStartDate())
-                && LocalDate.now().isBefore(coupon.getValidityEndDate())) {
+                !today.isBefore(coupon.getValidityStartDate())
+                &&
+                !today.isAfter(coupon.getValidityEndDate())) {
+
             user.getUsedCoupons().add(coupon);
             userRepository.save(user);
 
-            double discountedPrice = (cart.getTotalSellingPrice() * coupon.getDiscountPercentage()) / 100;
-            cart.setTotalSellingPrice(cart.getTotalSellingPrice() - discountedPrice);
+            double discountedAmount = (initialSellingPrice * coupon.getDiscountPercentage()) / 100;
+            cart.setTotalSellingPrice((int) (initialSellingPrice - discountedAmount));
             cart.setCouponCode(code);
-            cartRepository.save(cart);
-            return cart;
+
+            return cartRepository.save(cart);
         }
         throw new Exception("Coupon not valid");
     }
-
     @Override
     public Cart removeCoupon(String code, User user) throws Exception {
-        Coupon coupon = couponRepository.findByCode(code);
-        if (coupon == null) {
-            throw new Exception("Coupon not found");
-        }
-        Cart cart = cartRepository.findByUserId(user.getId());
+        Cart cart = cartService.findUserCart(user);
 
-        double discountedPrice = (cart.getTotalSellingPrice() * coupon.getDiscountPercentage()) / 100;
-        cart.setTotalSellingPrice(cart.getTotalSellingPrice() - discountedPrice);
+        if (cart.getCouponCode() == null || !cart.getCouponCode().equals(code)) {
+            throw new Exception("Coupon not currently applied");
+        }
+
+        double initialSellingPrice = calculateInitialSellingPrice(cart);
+        cart.setTotalSellingPrice((int) initialSellingPrice);
         cart.setCouponCode(null);
+
 
         return cartRepository.save(cart);
     }

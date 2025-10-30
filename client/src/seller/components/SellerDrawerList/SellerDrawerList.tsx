@@ -33,12 +33,7 @@ const menu = [
         icon: <AccountBalanceWallet className='text-primary'/>,
         activeIcon: <AccountBalanceWallet className='text-white'/>,
     },
-    {
-        name: "Transaction",
-        path: "/seller/transaction",
-        icon: <ReceiptSharp className='text-primary'/>,
-        activeIcon: <ReceiptSharp className='text-white'/>,
-    },
+
 ]
 
 const menu2 = [

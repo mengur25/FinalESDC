@@ -72,34 +72,47 @@ const handleSelectAddress = (id: number) => {
 
 
 const handlePayNow = () => {
-  if (!selectedAddress) {
-    alert("Please select an address before payment!");
-    return;
-  }
+    // 1. Kiểm tra địa chỉ và token (Giữ nguyên)
+    if (!selectedAddress) {
+        alert("Please select an address before payment!");
+        return;
+    }
+    if (!token) {
+        alert("You must be logged in to place an order!");
+        return;
+    }
 
-  const addressObj = addresses.find((a) => a.id === selectedAddress);
-
-
-  console.log("Pay with:", paymentGateway);
-  console.log("Address:", addressObj);
-  console.log("Order:", {
-    selectedProducts,
-    subtotal,
-    discount,
-    shipping,
-    total,
-  });
-if (!token) {
-  alert("You must be logged in to place an order!");
-  return;
-}
-   dispatch(
-    createOrder({
-      addressId: selectedAddress, // vì selectedAddress là id rồi
-      jwt: token,
-      paymentGateway, // "RAZORPAY" hoặc "STRIPE"
+    dispatch(
+        createOrder({
+            addressId: selectedAddress,
+            jwt: token,
+            paymentGateway,
+        })
+    )
+    .unwrap() 
+    .then((paymentLinkResponse) => {
+        
+        const paymentUrl = paymentLinkResponse.payment_link_url;
+        
+        if (paymentUrl) {
+            window.location.href = paymentUrl;
+        } else {
+            alert("Order placed successfully! Proceeding to payment...");
+            // navigate('/order-confirmation');
+        }
     })
-  );
+    .catch((error) => {
+        let errorMessage = "An unknown error occurred while creating the order.";
+        
+        if (typeof error === 'object' && error !== null && error.message) {
+             errorMessage = error.message;
+        } else if (typeof error === 'string') {
+             errorMessage = error;
+        }
+
+        alert(`Order Failed: ${errorMessage}`);
+        console.error("Order Creation Error:", error);
+    });
 };
 
 

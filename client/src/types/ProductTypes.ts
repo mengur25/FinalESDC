@@ -11,6 +11,7 @@ export interface Product{
     color:string;
     sizes:string;
     images:string[];
+    rating?:number;
     numRatings?:number;
     category?:Category;
     seller?:Seller;

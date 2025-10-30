@@ -19,6 +19,7 @@ import java.util.Set;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/orders")
+@CrossOrigin(origins = "http://localhost:3000")
 public class OrderController {
 
     private final UserService userService;
@@ -32,35 +33,41 @@ public class OrderController {
     private final AddressService addressService;
 
     @PostMapping
+
     public ResponseEntity<PaymentLinkResponse> createOrder(
             @RequestBody OrderRequest orderRequest,
             @RequestHeader("Authorization") String jwt
     ) throws Exception {
         User user = userService.findUserByJwtTokenWithAddresses(jwt);
         Cart cart = cartService.findUserCart(user);
-
-        // Địa chỉ đã lấy ra theo user -> không cần add lại vào user.getAddresses()
         Address shippingAddress = addressService.getAddressByIdAndUser(orderRequest.getAddressId(), user);
 
-        Set<Order> orders = orderService.createOrder(user, shippingAddress, cart);
-        PaymentOrder paymentOrder = paymentService.createOrder(user, orders);
+        PaymentOrder paymentOrder = orderService.createAndSavePaymentOrder(user, shippingAddress, cart);
 
         PaymentLinkResponse res = new PaymentLinkResponse();
-        if (orderRequest.getPaymentMethod().equals(PaymentMethod.RAZORPAY)) {
-            PaymentLink payment = paymentService.createRazorpayPaymentLink(
-                    user, paymentOrder.getAmount(), paymentOrder.getId()
-            );
-            String paymentUrl = payment.get("short_url");
-            String paymentUrlId = payment.get("id");
 
-            res.setPayment_link_url(paymentUrl);
-            paymentOrder.setPaymentLinkId(paymentUrlId);
-            paymentOrderRepository.save(paymentOrder);
-        } else {
-            String paymentUrl = paymentService.createStripePaymentLink(
-                    user, paymentOrder.getAmount(), paymentOrder.getId()
-            );
-            res.setPayment_link_url(paymentUrl);
+        try {
+            if (orderRequest.getPaymentMethod().equals(PaymentMethod.RAZORPAY)) {
+
+                PaymentLink payment = paymentService.createRazorpayPaymentLink(
+                        user, paymentOrder.getAmount(), paymentOrder.getId()
+                );
+                String paymentUrl = payment.get("short_url");
+                String paymentUrlId = payment.get("id");
+
+                res.setPayment_link_url(paymentUrl);
+
+                paymentOrder.setPaymentLinkId(paymentUrlId);
+                paymentOrderRepository.save(paymentOrder);
+            } else {
+                String paymentUrl = paymentService.createStripePaymentLink(
+                        user, paymentOrder.getAmount(), paymentOrder.getId()
+                );
+                res.setPayment_link_url(paymentUrl);
+            }
+
+        } catch (Exception e) {
+            throw new Exception("Payment Gateway connection error or invalid configuration. Please check logs.", e);
         }
 
         return new ResponseEntity<>(res, HttpStatus.OK);

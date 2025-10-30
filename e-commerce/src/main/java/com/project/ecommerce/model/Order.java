@@ -1,5 +1,7 @@
 package com.project.ecommerce.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.project.ecommerce.domain.OrderStatus;
 import com.project.ecommerce.domain.PaymentStatus;
 import jakarta.persistence.*;
@@ -16,6 +18,7 @@ import java.util.List;
 @NoArgsConstructor
 @EqualsAndHashCode
 @Table(name = "`order`")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -29,6 +32,7 @@ public class Order {
     private Long sellerId;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties({"order"})
     private List<OrderItem> orderItems = new ArrayList<>();
 
     @ManyToOne

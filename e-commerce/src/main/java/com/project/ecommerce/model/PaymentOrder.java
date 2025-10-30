@@ -1,5 +1,6 @@
 package com.project.ecommerce.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.project.ecommerce.domain.PaymentMethod;
 import com.project.ecommerce.domain.PaymentOrderStatus;
 import jakarta.persistence.*;
@@ -27,6 +28,7 @@ public class PaymentOrder {
     private String paymentLinkId;
 
     @ManyToOne
+    @JsonIgnore
     private User user;
 
     @OneToMany

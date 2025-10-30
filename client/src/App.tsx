@@ -21,13 +21,15 @@ import Account from "./customer/components/pages/Account/Account";
 import LoginForm from "./customer/components/pages/Auth/LoginForm";
 import Auth from "./customer/components/pages/Auth/Auth";
 import Register from "./customer/components/pages/Auth/Register";
-import PaymentSuccess from "./customer/components/pages/PaymentSuccess";
 import Wishlist from "./customer/components/pages/Wishlist/Wishlist";
 import BecomeSeller from "./customer/components/pages/BecomeSeller/BecomeSeller";
 import SellerDashboard from "./seller/pages/SellerDashboard/SellerDashboard";
 import AdminDashboard from "./admin/pages/Dashboard/AdminDashboard";
 import ProtectedRoute from "./ProtectedRoute";
 import AddressForm from "./customer/components/pages/Checkout/AddressForm";
+import PaymentSuccess from "./customer/components/pages/Checkout/PaymentSuccess";
+import WriteReview from "./customer/components/pages/Review/WriteReview";
+import LoginRequiredRoute from "./LoginRequiredRoute";
 
 function App() {
   const dispatch = useAppDispatch();
@@ -65,18 +67,21 @@ function App() {
         <Route path="/login" element={<Auth />} />
         <Route path="/register" element={<Register />} />
         <Route path="/products/:category" element={<Product />} />
+        <Route path="/reviews/:productId/create" element={<WriteReview />} />
         <Route path="/product-details/:categoryId/:title/:id" element={<ProductDetails />} />
         <Route path="/reviews/:productId" element={<Review />} />
         <Route
           path="/product-details/:categoryId/:title/:id"
           element={<ProductDetails />}
         />
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/wishlist" element={<Wishlist />} />
-        <Route path="/checkout" element={<Checkout />} />
-        <Route path="/payment-success/:orderId" element={<PaymentSuccess />} />
         <Route path="/become-seller" element={<BecomeSeller />} />
-        <Route path="/account/*" element={<Account />} />
+        <Route element={<LoginRequiredRoute />}>
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/wishlist" element={<Wishlist />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/payment-success" element={<PaymentSuccess />} />
+          <Route path="/account/*" element={<Account />} />
+        </Route>
         <Route
           path="/seller/*"
           element={

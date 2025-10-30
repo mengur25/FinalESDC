@@ -35,7 +35,6 @@ public class JwtProvider {
             throw new IllegalArgumentException("JWT is missing");
         }
 
-        // Nếu header có prefix "Bearer " thì cắt ra
         if (jwt.startsWith("Bearer ")) {
             jwt = jwt.substring(7);
         }

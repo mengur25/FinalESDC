@@ -1,41 +1,50 @@
-import { Avatar, Box, Grid2, IconButton, Rating } from "@mui/material";
+import { Avatar, Box, Grid, IconButton, Rating, Typography } from "@mui/material";
 import React from "react";
-import pr1 from "../../../../assets/pr1.png";
 import { Delete } from "@mui/icons-material";
 import { red } from "@mui/material/colors";
+// Giả định interfaces:
+interface Review { id: number; reviewText: string; rating: number; user: { firstName: string; lastName: string; }; createdAt: string; }
 
-const ReviewCard = () => {
-  return (
-    <div className="flex justify-between">
-      <Grid2 container spacing={9}>
-        <Grid2 size={{ xs: 1 }}>
-          <Box>
-            <Avatar
-              className="text-white"
-              sx={{ width: 56, height: 56, bgcolor: "#9155fd" }}
-            >
-              N
-            </Avatar>
-          </Box>
-        </Grid2>
+const ReviewCard = ({ review, onDelete }: { review: Review, onDelete: (reviewId: number) => void }) => {
+    
+    const initials = (review.user?.firstName?.[0] || 'N') + (review.user?.lastName?.[0] || 'A');
+    const fullName = `${review.user?.firstName || 'Anonymous'} ${review.user?.lastName || ''}`;
+    const formattedDate = review.createdAt ? new Date(review.createdAt).toLocaleDateString('vi-VN') : 'N/A';
 
-        <Grid2 size={{ xs: 9 }}>
-          <div className="space-y-2">
-            <p className="font-semibold text-lg">Nguyen</p>
-            <p className="opacity-70">2025-09-27T23:16:07.4788333</p>
-          </div>
-          <Rating readOnly value={4} precision={1} />
-          <p>Value for money product, great product</p>
-          <div>
-            <img className="w-24 h-24" src={pr1} alt="" />
-          </div>
-        </Grid2>
-      </Grid2>
-      <IconButton>
-        <Delete sx={{ color: red[700] }} />
-      </IconButton>
-    </div>
-  );
+    return (
+        <div className="flex justify-between">
+            <Grid container spacing={4}> 
+                <Grid item xs={1}>
+                    <Box>
+                        <Avatar
+                            className="text-white"
+                            sx={{ width: 56, height: 56, bgcolor: "#9155fd" }}
+                        >
+                            {initials}
+                        </Avatar>
+                    </Box>
+                </Grid>
+
+                <Grid item xs={10}>
+                    <div className="space-y-2">
+                        <Typography variant="subtitle1" className="font-semibold">
+                            {fullName}
+                        </Typography>
+                        <Typography variant="body2" className="opacity-70">
+                            {formattedDate}
+                        </Typography>
+                    </div>
+                    
+                    <Rating readOnly value={review.rating} precision={1} sx={{ mt: 1 }} />
+                    <Typography variant="body1" sx={{ mt: 1 }}>{review.reviewText}</Typography>
+                    
+
+                </Grid>
+            </Grid>
+            
+
+        </div>
+    );
 };
 
 export default ReviewCard;

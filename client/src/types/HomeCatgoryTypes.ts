@@ -17,3 +17,12 @@ export interface HomeCategory {
   image: string;
   parentCategoryId?: string;
 }
+
+
+export interface MinimalCategoryUpdate {
+    id: number;
+}
+
+export interface DealUpdateRequestBody extends Omit<Deal, 'category'> {
+    category: MinimalCategoryUpdate; 
+}

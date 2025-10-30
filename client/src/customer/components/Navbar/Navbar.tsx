@@ -5,8 +5,9 @@ import {
   IconButton,
   useMediaQuery,
   useTheme,
+  Badge, // Thêm Badge
 } from "@mui/material";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import MenuIcon from "@mui/icons-material/Menu";
 import {
   FavoriteBorder,
@@ -17,7 +18,9 @@ import {
 import CategorySheet from "./CategorySheet";
 import { mainCategory } from "../data/category/mainCategory";
 import { useNavigate } from "react-router-dom";
-import store, { useAppSelector } from "../../../State/Store";
+import store, { useAppDispatch, useAppSelector } from "../../../State/Store";
+import SearchBar from "./SearchBar";
+import { getWishlistByUserId } from "../../../State/Customer/wishlistSlice";
 
 const Navbar = () => {
   const theme = useTheme();
@@ -28,15 +31,24 @@ const Navbar = () => {
   const timeoutIdRef = useRef<NodeJS.Timeout | null>(null);
 
   const { auth } = useAppSelector((store) => store);
+  const dispatch = useAppDispatch();
+  const { wishlist } = useAppSelector((store) => store.wishlist); 
+
+  const { cart } = useAppSelector((store) => store.cart);
+  
+  const cartItemCount = cart?.cartItems?.length || 0;
+  const wishlistCount = wishlist?.products?.length || 0;
+
+  useEffect(() => {
+    dispatch(getWishlistByUserId());
+  }, [dispatch]);
+
   return (
     <>
       <Box className="sticky top-0 left-0 right-0 bg-white z-50">
         <div className="flex items-center justify-between px-5 lg:px-20 h-[70px] border-b">
           <div className="flex items-center gap-9">
             <div className="flex items-center gap-2">
-              <IconButton>
-                <MenuIcon />
-              </IconButton>
               <h1
                 onClick={() => navigate("/")}
                 className="logo cursor-pointer text-lg md:text-2xl text-primary"
@@ -56,7 +68,6 @@ const Navbar = () => {
                 }}
                 onMouseEnter={(e) => {
                   e.stopPropagation();
-                  console.log("Mouse entered");
                   if (timeoutIdRef.current) {
                     clearTimeout(timeoutIdRef.current);
                   }
@@ -64,15 +75,14 @@ const Navbar = () => {
                   setSelectedCategory(item.categoryId);
                 }}
                 className="mainCategory cursor-pointer hover:text-primary px-4 hover:border-b-4 border-primary"
+                key={item.categoryId}
               >
                 {item.name}
               </li>
             ))}
           </ul>
           <div className="flex gap-1 lg:gap-6 items-center">
-            <IconButton>
-              <Search />
-            </IconButton>
+            <SearchBar />
             {auth.isLoggedIn ? (
               <div className="flex flex-col items-center">
                 <Button
@@ -92,15 +102,33 @@ const Navbar = () => {
               </Button>
             )}
 
-            <IconButton onClick={() => navigate("/wishlist")}>
-              <FavoriteBorder sx={{ fontSize: 29 }} />
-            </IconButton>
-            <IconButton onClick={() => navigate("/cart")}>
-              <ShoppingCartOutlined
-                className="text-gray-700"
-                sx={{ fontSize: 29 }}
-              />
-            </IconButton>
+            {/* WISHLIST ICON VỚI BADGE */}
+            <Badge
+              badgeContent={wishlistCount}
+              color="error"
+              max={99}
+              anchorOrigin={{ vertical: "top", horizontal: "right" }}
+            >
+              <IconButton onClick={() => navigate("/account/wishlist")}>
+                <FavoriteBorder sx={{ fontSize: 29 }} />
+              </IconButton>
+            </Badge>
+
+            {/* CART ICON VỚI BADGE */}
+            <Badge
+              badgeContent={cartItemCount}
+              color="primary"
+              max={99}
+              anchorOrigin={{ vertical: "top", horizontal: "right" }}
+            >
+              <IconButton onClick={() => navigate("/cart")}>
+                <ShoppingCartOutlined
+                  className="text-gray-700"
+                  sx={{ fontSize: 29 }}
+                />
+              </IconButton>
+            </Badge>
+
             {isLarge && (
               <Button
                 onClick={() => navigate("/become-seller")}

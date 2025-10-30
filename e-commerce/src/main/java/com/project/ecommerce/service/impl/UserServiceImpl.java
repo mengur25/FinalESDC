@@ -16,7 +16,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public User findUserByJwtToken(String jwt) throws Exception {
         String email = jwtProvider.getEmailFromJwtToken(jwt);
-        System.out.println("👉 Received JWT raw: " + jwt);
+        System.out.println("Received JWT raw: " + jwt);
         return this.findUserByEmail(email);
     }
 
@@ -30,7 +30,6 @@ public class UserServiceImpl implements UserService {
     }
     @Override
     public User findUserByJwtTokenWithAddresses(String jwt) throws Exception {
-        // ... (Logic trích xuất email từ JWT)
         String email = jwtProvider.getEmailFromJwtToken(jwt);
 
         return userRepository.findByEmailWithAddresses(email)

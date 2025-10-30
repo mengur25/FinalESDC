@@ -1,6 +1,6 @@
 import { AddPhotoAlternate, Close } from "@mui/icons-material";
 import {
-  Alert,
+  // Bỏ Alert, Snackbar vì đã dùng toast
   Button,
   CircularProgress,
   FormControl,
@@ -10,13 +10,17 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  Snackbar,
+  // Bỏ Snackbar, Alert
   TextField,
 } from "@mui/material";
 import { useFormik } from "formik";
 import React, { useState } from "react";
+// Import toast
+import toast, { Toaster } from "react-hot-toast";
+
 import { uploadToCloudinary } from "../../../Utils/uploadToCloudinary";
 import { colors } from "../../../customer/components/data/filter/color";
+// ... (Các imports category giữ nguyên)
 import { menLevelTwo } from "../../../customer/components/data/category/level two/menLevelTwo";
 import { womenLevelTwo } from "../../../customer/components/data/category/level two/womenLevelTwo";
 import { furnitureLevelTwo } from "../../../customer/components/data/category/level two/furnitureLevelTwo";
@@ -49,9 +53,9 @@ const categoryThree: { [key: string]: any[] } = {
 
 const AddProduct = () => {
   const [uploadImage, setUploadingImage] = useState(false);
-  const dispatch = useAppDispatch()
-  const [snackbarOpen, setOpenSnackbar] = useState(false);
-  // const {seller, sellerProduct} = useAppSelector(store => store);
+  const dispatch = useAppDispatch();
+
+  const { loading, error } = useAppSelector((state: any) => state.sellerProduct);
 
   const formik = useFormik({
     initialValues: {
@@ -67,19 +71,38 @@ const AddProduct = () => {
       category3: "",
       size: "",
     },
-    onSubmit: (values) => {
+    onSubmit: async (values, { resetForm }) => {
       console.log(values);
-      dispatch(createProduct({request: values, jwt:localStorage.getItem("jwt")}))
+      const resultAction = await dispatch(
+        createProduct({ request: values, jwt: localStorage.getItem("jwt") })
+      );
+
+      // SỬ DỤNG react-hot-toast ĐỂ THÔNG BÁO KẾT QUẢ
+      if (createProduct.fulfilled.match(resultAction)) {
+        toast.success(" Product created successfully!");
+        resetForm(); // Reset form sau khi thành công
+      } else if (createProduct.rejected.match(resultAction)) {
+        const errorMessage = resultAction.payload 
+            ? resultAction.payload.toString() 
+            : " Failed to create product. Please check the data.";
+        toast.error(errorMessage);
+      }
     },
   });
 
   const handleImageChange = async (event: any) => {
     const file = event.target.files[0];
-    setUploadingImage(true);
-    const image = await uploadToCloudinary(file);
+    if (!file) return;
 
-    formik.setFieldValue("images", [...formik.values.images, image]);
-    setUploadingImage(false);
+    setUploadingImage(true);
+    try {
+        const image = await uploadToCloudinary(file);
+        formik.setFieldValue("images", [...formik.values.images, image]);
+    } catch (error) {
+        toast.error("Error uploading image to Cloudinary.");
+    } finally {
+        setUploadingImage(false);
+    }
   };
 
   const handleRemoveImage = (index: number) => {
@@ -94,11 +117,11 @@ const AddProduct = () => {
     });
   };
 
-  const handleCloseSnackbar = () => {
-    setOpenSnackbar(false);
-  };
+
   return (
     <div>
+      <Toaster position="top-right" reverseOrder={false} />
+
       <form onSubmit={formik.handleSubmit} className="space-y-4 p-4">
         <Grid2 container spacing={2}>
           <Grid2 className="flex flex-wrap gap-5" size={{ xs: 12 }} />
@@ -121,7 +144,7 @@ const AddProduct = () => {
           </label>
 
           <div className="flex flex-wrap gap-2">
-            {formik.values.images.map((image, index) => (
+            {formik.values.images.map((image: string, index: number) => (
               <div className="relative" key={index}>
                 <img
                   className="w-24 h-24 object-cover"
@@ -140,8 +163,8 @@ const AddProduct = () => {
                     outline: "none",
                   }}
                 >
-                  <Close sx={{fontSize: "1rem"}}/>
-                  </IconButton>
+                  <Close sx={{ fontSize: "1rem" }} />
+                </IconButton>
               </div>
             ))}
           </div>
@@ -212,6 +235,25 @@ const AddProduct = () => {
             />
           </Grid2>
           <Grid2 size={{ xs: 12, md: 6, lg: 3 }}>
+            <TextField
+              fullWidth
+              id="quantity"
+              name="quantity"
+              label="Quantity (In Stock)"
+              type="number"
+              value={formik.values.quantity}
+              onChange={formik.handleChange}
+              error={
+                formik.touched.quantity && Boolean(formik.errors.quantity)
+              }
+              helperText={
+                formik.touched.quantity && formik.errors.quantity
+              }
+              required
+              InputProps={{ inputProps: { min: 0 } }}
+            />
+          </Grid2>
+          <Grid2 size={{ xs: 12, md: 6, lg: 3 }}>
             <FormControl
               fullWidth
               error={formik.touched.color && Boolean(formik.errors.color)}
@@ -248,13 +290,16 @@ const AddProduct = () => {
               )}
             </FormControl>
           </Grid2>
+        </Grid2>
+
+        <Grid2 container spacing={2}>
           <Grid2 size={{ xs: 12, md: 6, lg: 3 }}>
             <FormControl
               fullWidth
-              error={formik.touched.color && Boolean(formik.errors.color)}
+              error={formik.touched.size && Boolean(formik.errors.size)}
               required
             >
-              <InputLabel id="color-label">Size</InputLabel>
+              <InputLabel id="size-label">Size</InputLabel>
               <Select
                 labelId="size-label"
                 id="size"
@@ -271,6 +316,10 @@ const AddProduct = () => {
                 <MenuItem value="M">M</MenuItem>
                 <MenuItem value="L">L</MenuItem>
                 <MenuItem value="XL">XL</MenuItem>
+                <MenuItem value="128GB">128GB</MenuItem>
+                <MenuItem value="256GB">256GB</MenuItem>
+                <MenuItem value="512GB">512GB</MenuItem>
+                <MenuItem value="1TB">1TB</MenuItem>
               </Select>
               {formik.touched.size && formik.errors.size && (
                 <FormHelperText>{formik.errors.size}</FormHelperText>
@@ -298,8 +347,8 @@ const AddProduct = () => {
                 <MenuItem>
                   <em>None</em>
                 </MenuItem>
-                {mainCategory.map((item) =>(
-                  <MenuItem value={item.categoryId}>{item.name}</MenuItem>
+                {mainCategory.map((item) => (
+                  <MenuItem key={item.categoryId} value={item.categoryId}>{item.name}</MenuItem>
                 ))}
               </Select>
               {formik.touched.category && formik.errors.category && (
@@ -327,7 +376,7 @@ const AddProduct = () => {
                 </MenuItem>
                 {formik.values.category &&
                   categoryTwo[formik.values.category]?.map((item) => (
-                    <MenuItem value={item.categoryId}>{item.name}</MenuItem>
+                    <MenuItem key={item.categoryId} value={item.categoryId}>{item.name}</MenuItem>
                   ))}
               </Select>
               {formik.touched.category && formik.errors.category && (
@@ -358,7 +407,7 @@ const AddProduct = () => {
                     categoryThree[formik.values.category],
                     formik.values.category2
                   )?.map((item: any) => (
-                    <MenuItem value={item.categoryId}>{item.name}</MenuItem>
+                    <MenuItem key={item.categoryId} value={item.categoryId}>{item.name}</MenuItem>
                   ))}
               </Select>
               {formik.touched.category && formik.errors.category && (
@@ -374,11 +423,13 @@ const AddProduct = () => {
             variant="contained"
             fullWidth
             type="submit"
+            // Hiển thị loading từ Redux state
+            disabled={loading} 
           >
-            {false ? (
+            {loading ? (
               <CircularProgress
                 size="small"
-                sx={{ width: "27px", height: "27px" }}
+                sx={{ width: "27px", height: "27px", color: "white" }}
               />
             ) : (
               "Add Product"
@@ -387,20 +438,6 @@ const AddProduct = () => {
         </Grid2>
       </form>
 
-      {/* <Snackbar
-      anchorOrigin={{vertical: "top", horizontal: "right"}}
-      open={snackbarOpen} autoHideDuration={6000}
-      onClose={handleCloseSnackbar}
-      >
-        <Alert
-        onClose={handleCloseSnackbar}
-        severity={true ? "error": "success"}
-        variant="filled"
-        sx={{width: "100%"}}
-        >
-          {sellerProduct.error ? sellerProduct.error : "Product create!"}
-        </Alert>
-      </Snackbar> */}
     </div>
   );
 };

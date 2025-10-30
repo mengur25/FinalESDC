@@ -6,7 +6,7 @@ const API_URL = "/admin";
 
 export const updateHomeCategory = createAsyncThunk<
   HomeCategory,
-  { id: number; data: HomeData }
+  { id: number; data: Partial<HomeCategory> } 
 >(
   "homeCategory/updateHomeCategory",
   async ({ id, data }, { rejectWithValue }) => {
@@ -27,7 +27,7 @@ export const fetchHomeCategory = createAsyncThunk<HomeCategory[]>(
   "homeCategory/fetchHomeCategory",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get(`${API_URL}/home-category/`);
+      const response = await api.get(`${API_URL}/home-category`);
       console.log("Category", response);
       return response.data;
     } catch (error: any) {

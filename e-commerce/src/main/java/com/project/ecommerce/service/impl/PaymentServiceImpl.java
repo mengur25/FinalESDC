@@ -84,55 +84,17 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public PaymentLink createRazorpayPaymentLink(User user, Long amount, Long orderId) throws RazorpayException {
-        amount = amount * 100;
-        try {
-            RazorpayClient razorpay = new RazorpayClient(apiKey, apiSecret);
-            JSONObject paymentLinkRequest = new JSONObject();
-            paymentLinkRequest.put("amount", amount);
-            paymentLinkRequest.put("currency", "USD");
 
-            JSONObject customer = new JSONObject();
-            customer.put("name", user.getFullName());
-            customer.put("email", user.getEmail());
-            paymentLinkRequest.put("customer", customer);
+        JSONObject mockJson = new JSONObject();
+        mockJson.put("short_url", "http://localhost:3000/payment-success?payment_id=mock_razorpay_success&payment_link_id=" + orderId);
+        mockJson.put("id", "mock_pl_id_" + orderId);
 
-            JSONObject notify = new JSONObject();
-            notify.put("email", true);
-            paymentLinkRequest.put("notify", notify);
-
-            paymentLinkRequest.put("callback_url", "http://localhost:3000/payment-success/" + orderId);
-            paymentLinkRequest.put("callback_method", "get");
-
-            PaymentLink paymentLink = razorpay.paymentLink.create(paymentLinkRequest);
-            String paymentLinkUrl = paymentLink.get("short_url");
-            String paymentLinkId = paymentLink.get("id");
-            return paymentLink;
-        } catch (Exception e) {
-            System.err.println(e.getMessage());
-            throw new RazorpayException(e.getMessage());
-        }
+        return new PaymentLink(mockJson);
     }
 
     @Override
     public String createStripePaymentLink(User user, Long amount, Long orderId) throws StripeException {
-        Stripe.apiKey = stripeSecretKey;
-        SessionCreateParams params = SessionCreateParams.builder()
-                .addPaymentMethodType(SessionCreateParams.PaymentMethodType.CARD)
-                .setMode(SessionCreateParams.Mode.PAYMENT)
-                .setSuccessUrl("http://localhost:3000/payment-success/" + orderId)
-                .setCancelUrl("http://localhost:3000/payment-cancel/")
-                .addLineItem(SessionCreateParams.LineItem.builder()
-                        .setQuantity(1L)
-                        .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
-                                .setCurrency("usd")
-                                .setUnitAmount(amount)
-                                .setProductData(SessionCreateParams.LineItem.PriceData
-                                        .ProductData.builder().setName("E-commerce").build())
-                                .build())
-                        .build())
-                .build();
 
-        Session session = Session.create(params);
-        return session.getUrl();
+        return "http://localhost:3000/payment-success?payment_id=mock_stripe_success&payment_link_id=" + orderId;
     }
 }

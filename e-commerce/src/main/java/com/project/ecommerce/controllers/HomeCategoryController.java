@@ -26,7 +26,7 @@ public class HomeCategoryController {
         return new ResponseEntity<>(home, HttpStatus.ACCEPTED);
     }
 
-    @GetMapping("/home-category")
+    @GetMapping("/admin/home-category")
     public ResponseEntity<List<HomeCategory>> getHomeCategory(){
         List<HomeCategory> categories = homeCategoryService.getAllHomeCategories();
         return  ResponseEntity.ok(categories);
