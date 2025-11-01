@@ -6,6 +6,9 @@ import {
   Divider,
   Box,
   CircularProgress,
+  List,
+  ListItem,
+  ListItemText,
 } from "@mui/material";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
@@ -35,7 +38,82 @@ const formatCurrency = (amount: number | undefined): string => {
   }).format(amount);
 };
 
-// ✅ Xử lý dữ liệu theo ngày
+
+const processBestSellingProducts = (orders: Order[]) => {
+  const productMap = orders.reduce((acc, order) => {
+    if (order.orderStatus === "CANCELLED" || !order.orderItems) return acc;
+
+    order.orderItems.forEach((item) => {
+      if (!item.product || !item.product.id) return;
+        
+      const productId = String(item.product.id);
+      const productName = item.product.title;
+      const quantity = item.quantity;
+
+      if (!acc[productId]) {
+        acc[productId] = { id: item.product.id, name: productName, totalQuantity: 0 };
+      }
+      acc[productId].totalQuantity += quantity;
+    });
+    return acc;
+  }, {} as Record<string, { id: number; name: string; totalQuantity: number }>);
+
+  return Object.values(productMap)
+    .sort((a, b) => b.totalQuantity - a.totalQuantity)
+    .slice(0, 5); // Lấy 5 sản phẩm hàng đầu
+};
+
+const processTopRevenueProducts = (orders: Order[]) => {
+  const productMap = orders.reduce((acc, order) => {
+    if (order.orderStatus === "CANCELLED" || !order.orderItems) return acc;
+
+    order.orderItems.forEach((item) => {
+      if (!item.product || !item.product.id) return;
+
+      const productId = String(item.product.id);
+      const productName = item.product.title;
+      const revenue = item.sellingPrice || 0;
+
+      if (!acc[productId]) {
+        acc[productId] = { id: item.product.id, name: productName, totalRevenue: 0 };
+      }
+      acc[productId].totalRevenue += revenue;
+    });
+    return acc;
+  }, {} as Record<string, { id: number; name: string; totalRevenue: number }>);
+
+  return Object.values(productMap)
+    .sort((a, b) => b.totalRevenue - a.totalRevenue)
+    .slice(0, 5); 
+};
+
+const processTopCustomers = (orders: Order[]) => {
+  const customerMap = orders.reduce((acc, order) => {
+    if (order.orderStatus === "CANCELLED" || !order.user || !order.user.email) return acc;
+
+    const userEmail = order.user.email;
+    const userName = order.user.fullName; 
+    const totalSpent = order.totalSellingPrice || 0;
+
+    if (!acc[userEmail]) {
+      acc[userEmail] = { 
+        id: userEmail, 
+        name: userName, 
+        totalOrders: 0, 
+        totalSpent: 0 
+      };
+    }
+    acc[userEmail].totalOrders += 1;
+    acc[userEmail].totalSpent += totalSpent;
+    return acc;
+  }, {} as Record<string, { id: string; name: string; totalOrders: number; totalSpent: number }>); 
+
+  return Object.values(customerMap)
+    .sort((a, b) => b.totalOrders - a.totalOrders)
+    .slice(0, 5);
+};
+
+
 const processDailyData = (orders: Order[]) => {
   const dailyDataMap = orders.reduce((acc, order) => {
     if (order.orderStatus === "CANCELLED") return acc;
@@ -60,7 +138,6 @@ const processDailyData = (orders: Order[]) => {
   );
 };
 
-// ✅ Xử lý dữ liệu theo tháng
 const processMonthlyData = (orders: Order[]) => {
   const monthlyDataMap = orders.reduce((acc, order) => {
     if (order.orderStatus === "CANCELLED") return acc;
@@ -83,12 +160,36 @@ const processMonthlyData = (orders: Order[]) => {
 
 const Dashboard = () => {
   const dispatch = useAppDispatch();
-  const { report, loading: reportLoading } = useAppSelector(
+  const { report, loading: reportLoading, error: reportError } = useAppSelector(
     (state: any) => state.seller
   );
   const { transactions: orders, loading: orderLoading } = useAppSelector(
     (state: any) => state.transactions
   );
+
+    const { transactions } = useAppSelector((state: any) => state.transactions);
+    const calculatedTotalEarnings = useMemo(() => {
+        return (transactions as any[]).reduce((total, order) => {
+          if (order.orderStatus === "CANCELLED") {
+            return total;
+          }
+          const price = order.totalSellingPrice || 0;
+          return total + price;
+        }, 0);
+      }, [transactions]);
+  const totalEarnings = report?.totalEarnings || calculatedTotalEarnings;
+  
+  const estimatedNetPayout = totalEarnings * 0.9; 
+
+  const displayValue = estimatedNetPayout; 
+
+  const isLoading = reportLoading && !report;
+    useEffect(() => {
+      const jwt = localStorage.getItem("jwt") || "";
+      if (jwt) {
+        dispatch(fetchSellerReport(jwt));
+      }
+    }, [dispatch]);
 
   const [startDate, setStartDate] = useState<Dayjs | null>(
     dayjs().subtract(30, "day")
@@ -127,7 +228,12 @@ const Dashboard = () => {
 
   const dailyMonthData = useMemo(() => processDailyData(monthlyFilteredData), [monthlyFilteredData]);
 
-  // --- DỮ LIỆU MONTHLY CHUNG ---
+
+  const topSellingProducts = useMemo(() => processBestSellingProducts(orders), [orders]);
+  const topRevenueProducts = useMemo(() => processTopRevenueProducts(orders), [orders]);
+  const topCustomers = useMemo(() => processTopCustomers(orders), [orders]);
+
+
   const generalMonthlyData = useMemo(() => processMonthlyData(orders), [orders]);
 
   if (reportLoading || orderLoading) {
@@ -141,6 +247,8 @@ const Dashboard = () => {
     );
   }
 
+  
+
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box sx={{ p: 4, background: "#f5f5f5", minHeight: "100vh" }}>
@@ -148,8 +256,34 @@ const Dashboard = () => {
           Seller Dashboard
         </Typography>
         <Divider sx={{ mb: 4 }} />
-
-        {/* --- Bộ lọc theo ngày --- */}
+      <Card className="rounded-md sapce-y-4 p-5">
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center h-20">
+            <CircularProgress size={24} />
+            <Typography variant="body2" color="textSecondary">
+              Loading Report...
+            </Typography>
+          </div>
+        ) : reportError ? (
+          <Typography variant="body2" color="error">
+            Error loading report: {reportError}
+          </Typography>
+        ) : (
+          <>
+            <h1 className="text-gray-600 font-medium">
+              Total Earning (Gross Sales)
+            </h1>
+            <h1 className="font-bold text-xl pb-1">
+              {formatCurrency(totalEarnings)}
+            </h1>
+            <Divider />
+            <p className="text-gray-600 font-medium pt-1">
+              Net Payout (Estimated):{" "}
+              <strong>{formatCurrency(displayValue)}</strong>
+            </p>
+          </>
+        )}
+      </Card>
         <Box
           display="flex"
           gap={3}
@@ -177,7 +311,6 @@ const Dashboard = () => {
           />
         </Box>
 
-        {/* --- 1. DAILY REVENUE --- */}
         <Grid container spacing={4}>
           <Grid item xs={12} lg={6}>
             <Card elevation={3} sx={{ p: 2 }}>
@@ -196,8 +329,6 @@ const Dashboard = () => {
               </ResponsiveContainer>
             </Card>
           </Grid>
-
-          {/* --- 2. DAILY ORDERS (Filtered) --- */}
           <Grid item xs={12} lg={6}>
             <Card elevation={3} sx={{ p: 2 }}>
               <Typography variant="h6" gutterBottom>
@@ -222,8 +353,67 @@ const Dashboard = () => {
             </Card>
           </Grid>
         </Grid>
+        
+        <Box sx={{ mt: 6, mb: 4 }}>
+          <Typography variant="h5" gutterBottom fontWeight="bold" color="textPrimary">
+            Top Sales Performance
+          </Typography>
+        </Box>
 
-        {/* --- Bộ chọn tháng --- */}
+        <Grid container spacing={4}>
+          <Grid item xs={12} md={4}>
+            <Card elevation={3} sx={{ p: 2 }}>
+              <Typography variant="h6" gutterBottom color="primary.dark">
+                Best Selling Products (Quantity)
+              </Typography>
+              <Divider sx={{ mb: 1 }} />
+              <List>
+                {topSellingProducts.map((p, index) => (
+                  <ListItem key={p.id} disablePadding>
+                    <ListItemText primary={`${index + 1}. ${p.name}`} secondary={`Units Sold: ${p.totalQuantity}`} />
+                  </ListItem>
+                ))}
+              </List>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <Card elevation={3} sx={{ p: 2 }}>
+              <Typography variant="h6" gutterBottom color="secondary.dark">
+                Top Revenue Products
+              </Typography>
+              <Divider sx={{ mb: 1 }} />
+              <List>
+                {topRevenueProducts.map((p, index) => (
+                  <ListItem key={p.id} disablePadding>
+                    <ListItemText primary={`${index + 1}. ${p.name}`} secondary={`Revenue: ${formatCurrency(p.totalRevenue)}`} />
+                  </ListItem>
+                ))}
+              </List>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <Card elevation={3} sx={{ p: 2 }}>
+              <Typography variant="h6" gutterBottom color="info.main">
+                Top Customers (Orders/Spending)
+              </Typography>
+              <Divider sx={{ mb: 1 }} />
+              <List>
+                {topCustomers.map((c, index) => (
+                  <ListItem key={c.id} disablePadding>
+                    <ListItemText 
+                      primary={`${index + 1}. ${c.name}`} 
+                      secondary={`Orders: ${c.totalOrders} | Spent: ${formatCurrency(c.totalSpent)}`} 
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            </Card>
+          </Grid>
+        </Grid>
+
+
         <Box
           display="flex"
           alignItems="center"
@@ -247,7 +437,6 @@ const Dashboard = () => {
           />
         </Box>
 
-        {/* --- 3. MONTHLY REVENUE --- */}
         <Grid container spacing={4}>
           <Grid item xs={12} lg={6}>
             <Card elevation={3} sx={{ p: 2 }}>
@@ -266,8 +455,6 @@ const Dashboard = () => {
               </ResponsiveContainer>
             </Card>
           </Grid>
-
-          {/* --- 4. MONTHLY ORDER COUNT --- */}
           <Grid item xs={12} lg={6}>
             <Card elevation={3} sx={{ p: 2 }}>
               <Typography variant="h6" gutterBottom>

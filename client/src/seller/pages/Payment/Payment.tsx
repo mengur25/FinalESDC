@@ -83,9 +83,9 @@ const Payment = () => {
         )}
       </Card>
       <div className="mt-20 space-y-3">
-        <Button variant="contained">
+        <div className="font-bold text-lg">
           Transaction History ({transactions.length})
-        </Button>
+        </div>
         <TransactionTable />
       </div>
     </div>

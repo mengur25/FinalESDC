@@ -12,6 +12,7 @@ import { Deal } from "../../../types/DealType";
 import { useAppDispatch, useAppSelector } from "../../../State/Store";
 import { updateDeal } from "../../../State/Admin/dealSlice";
 import { DealUpdateRequestBody } from "../../../types/HomeCatgoryTypes";
+import toast from "react-hot-toast";
 
 const modalStyle = {
   position: "absolute" as "absolute",
@@ -31,9 +32,13 @@ interface EditDealModalProps {
   deal: Deal | null;
 }
 
-const EditDealModal: React.FC<EditDealModalProps> = ({ open, onClose, deal }) => {
+const EditDealModal: React.FC<EditDealModalProps> = ({
+  open,
+  onClose,
+  deal,
+}) => {
   const dispatch = useAppDispatch();
-  const { loading } = useAppSelector((state: any) => state.deal); 
+  const { loading } = useAppSelector((state: any) => state.deal);
 
   const formik = useFormik({
     initialValues: {
@@ -43,22 +48,22 @@ const EditDealModal: React.FC<EditDealModalProps> = ({ open, onClose, deal }) =>
     onSubmit: (values) => {
       if (!deal || !deal.id) return;
 
-      const updatedDealData: DealUpdateRequestBody = { 
-    ...deal, 
-    discount: values.discount, 
-    category: { 
-        id: deal.category.id!, 
-    },
-};
+      const updatedDealData: DealUpdateRequestBody = {
+        ...deal,
+        discount: values.discount,
+        category: {
+          id: deal.category.id!,
+        },
+      };
 
       dispatch(updateDeal({ id: deal.id, updatedDeal: updatedDealData }))
         .unwrap()
         .then(() => {
-          alert(`Deal ID ${deal.id} updated successfully!`);
+          toast.success(`Deal ID ${deal.id} updated successfully!`);
           onClose();
         })
         .catch((err: string) => {
-          alert(`Update failed: ${err}`);
+          toast.error(`Update failed: ${err}`);
         });
     },
   });
@@ -69,7 +74,11 @@ const EditDealModal: React.FC<EditDealModalProps> = ({ open, onClose, deal }) =>
         <Typography variant="h6" component="h2" gutterBottom>
           Edit Discount for: **{deal?.category.name}**
         </Typography>
-        <Box component="form" onSubmit={formik.handleSubmit} sx={{ mt: 2, spaceY: 3 }}>
+        <Box
+          component="form"
+          onSubmit={formik.handleSubmit}
+          sx={{ mt: 2, spaceY: 3 }}
+        >
           <TextField
             fullWidth
             type="number"
@@ -85,7 +94,11 @@ const EditDealModal: React.FC<EditDealModalProps> = ({ open, onClose, deal }) =>
               Cancel
             </Button>
             <Button type="submit" variant="contained" disabled={loading}>
-              {loading ? <CircularProgress size={24} color="inherit" /> : "Save Changes"}
+              {loading ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                "Save Changes"
+              )}
             </Button>
           </div>
         </Box>

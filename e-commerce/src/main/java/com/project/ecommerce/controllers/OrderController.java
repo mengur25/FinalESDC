@@ -1,5 +1,6 @@
 package com.project.ecommerce.controllers;
 
+import com.project.ecommerce.domain.OrderStatus;
 import com.project.ecommerce.domain.PaymentMethod;
 import com.project.ecommerce.model.*;
 import com.project.ecommerce.repository.OrderItemRepository;
@@ -97,6 +98,18 @@ public class OrderController {
         User user = userService.findUserByJwtToken(jwt);
         OrderItem orderItem = orderService.findById(orderItemId);
         return new ResponseEntity<>(orderItem, HttpStatus.ACCEPTED);
+    }
+
+    @PutMapping("/{orderId}/delivered")
+    public ResponseEntity<Order> markOrderAsDelivered(
+            @PathVariable Long orderId,
+            @RequestHeader("Authorization") String jwt
+    ) throws Exception {
+        User user = userService.findUserByJwtToken(jwt);
+        Order order = orderService.updateOrderStatus(orderId, OrderStatus.DELIVERED);
+
+
+        return ResponseEntity.ok(order);
     }
 
     @PutMapping("/{orderId}/cancel")

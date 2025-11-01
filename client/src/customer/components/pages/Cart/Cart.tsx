@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../../State/Store";
 import { fetchUserCart } from "../../../../State/Customer/cartSlice";
 import { applyCoupon } from "../../../../State/Customer/couponSlice";
+import toast from "react-hot-toast";
 
 const Cart = () => {
   const [couponCode, setCouponCode] = useState("");
@@ -19,7 +20,7 @@ const Cart = () => {
     loading: couponLoading,
     error: couponError,
     // THÊM: Lấy state boolean xác nhận coupon đã áp dụng thành công
-    couponApplied: isCouponActionApplied, 
+    couponApplied: isCouponActionApplied,
   } = useAppSelector((store: any) => store.coupon);
 
   const currentCart = appliedCart || cartStore;
@@ -45,8 +46,9 @@ const Cart = () => {
   };
 
   const selectedProducts =
-    currentCart?.cartItems.filter((item: any) => selectedItems.includes(item.id)) ||
-    [];
+    currentCart?.cartItems.filter((item: any) =>
+      selectedItems.includes(item.id)
+    ) || [];
 
   const rawSubtotal = selectedProducts.reduce(
     (sum: number, item: any) => sum + item.mrpPrice,
@@ -62,7 +64,9 @@ const Cart = () => {
   const rawTotal = rawTotalSelling + rawShipping;
 
   // SỬ DỤNG TRẠNG THÁI `couponApplied` TỪ REDUX HOẶC KIỂM TRA `couponCode`
-  const isCouponApplied = isCouponActionApplied || (currentCart?.couponCode !== null && currentCart?.couponCode !== undefined);
+  const isCouponApplied =
+    isCouponActionApplied ||
+    (currentCart?.couponCode !== null && currentCart?.couponCode !== undefined);
 
   let displaySubtotal: number;
   let displayDiscount: number;
@@ -71,42 +75,44 @@ const Cart = () => {
 
   if (isCouponApplied) {
     // Logic cho giỏ hàng đã áp dụng coupon
-    displaySubtotal = currentCart.totalMrpPrice || rawSubtotal; 
-    displayDiscount = (currentCart.totalMrpPrice - currentCart.totalSellingPrice) || rawDiscount; 
-    displayShipping = rawShipping; 
-    displayTotal = currentCart.totalSellingPrice + displayShipping; 
-    console.log("hi");
+    displaySubtotal = currentCart.totalMrpPrice || rawSubtotal;
+    displayDiscount =
+      currentCart.totalMrpPrice - currentCart.totalSellingPrice || rawDiscount;
+    displayShipping = rawShipping;
+    displayTotal = currentCart.totalSellingPrice + displayShipping;
   } else {
     // Logic cho giỏ hàng chưa có coupon
     displaySubtotal = rawSubtotal;
     displayDiscount = rawDiscount;
     displayShipping = rawShipping;
     displayTotal = rawTotal;
-    console.log("cc");
   }
 
-  const appliedCouponName = currentCart?.coupon?.code || (currentCart as any)?.couponCode || ""; 
+  const appliedCouponName =
+    currentCart?.coupon?.code || (currentCart as any)?.couponCode || "";
 
   const handleApplyCoupon = () => {
     if (!jwt) {
-      alert("Please login to apply coupon.");
+      toast.error("Please login to apply coupon.");
       return;
     }
     if (!couponCode) {
-      alert("Please enter a coupon code.");
+      toast.error("Please enter a coupon code.");
       return;
     }
-    
+
     const totalItemsInCart = currentCart?.cartItems?.length || 0;
     if (totalItemsInCart > 0 && selectedProducts.length !== totalItemsInCart) {
-        alert("To apply a coupon, you must select ALL items in your cart. Coupon application affects the entire order value calculated by the system.");
-        return;
-    }
-    if (selectedProducts.length === 0) {
-      alert("Please select items in the cart first.");
+      toast.error(
+        "To apply a coupon, you must select ALL items in your cart. Coupon application affects the entire order value calculated by the system."
+      );
       return;
     }
-    
+    if (selectedProducts.length === 0) {
+      toast.error("Please select items in the cart first.");
+      return;
+    }
+
     const orderValueForCoupon = rawTotalSelling;
 
     dispatch(
@@ -136,16 +142,21 @@ const Cart = () => {
   };
 
   const handleBuyNow = () => {
-    if (isCouponApplied && selectedProducts.length !== (currentCart?.cartItems?.length || 0)) {
-        alert("The coupon is applied to the ENTIRE cart. Please select all items to proceed to checkout with the discounted price.");
-        return;
-    }
-    
-    if (selectedProducts.length === 0) {
-      alert("Please select at least one item to proceed to checkout.");
+    if (
+      isCouponApplied &&
+      selectedProducts.length !== (currentCart?.cartItems?.length || 0)
+    ) {
+      toast.error(
+        "The coupon is applied to the ENTIRE cart. Please select all items to proceed to checkout with the discounted price."
+      );
       return;
     }
-    
+
+    if (selectedProducts.length === 0) {
+      toast.error("Please select at least one item to proceed to checkout.");
+      return;
+    }
+
     navigate("/checkout", {
       state: {
         selectedProducts,
@@ -188,7 +199,9 @@ const Cart = () => {
                   onClick={handleApplyCoupon}
                   variant="contained"
                   disabled={
-                    couponLoading || !couponCode || selectedProducts.length === 0
+                    couponLoading ||
+                    !couponCode ||
+                    selectedProducts.length === 0
                   }
                 >
                   {couponLoading ? "Applying..." : "Apply"}

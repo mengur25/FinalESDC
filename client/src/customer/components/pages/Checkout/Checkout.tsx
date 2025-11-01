@@ -7,8 +7,13 @@ import PricingCard from "../Cart/PricingCard";
 import { useLocation } from "react-router-dom";
 import UserAddressCard from "../Account/UserAddressCard";
 import { useAppDispatch, useAppSelector } from "../../../../State/Store";
-import { createAddress, fetchAddresses, selectAddress } from "../../../../State/Customer/AddressSlice";
+import {
+  createAddress,
+  fetchAddresses,
+  selectAddress,
+} from "../../../../State/Customer/AddressSlice";
 import { createOrder } from "../../../../State/Customer/orderSlice";
+import toast from "react-hot-toast";
 const style = {
   position: "absolute" as "absolute",
   top: "50%",
@@ -49,72 +54,69 @@ const Checkout = () => {
   const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
-const token = localStorage.getItem("jwt");
+  const token = localStorage.getItem("jwt");
   // Payment Gateway
   const [paymentGateway, setPaymentGateway] = useState("RAZORPAY");
   const handlePaymentChange = (event: any) =>
     setPaymentGateway(event.target.value);
 
-
   const dispatch = useAppDispatch();
-const { addresses, selectedAddress  } = useAppSelector((state) => state.address);
+  const { addresses, selectedAddress } = useAppSelector(
+    (state) => state.address
+  );
 
-useEffect(() => {
-  dispatch(fetchAddresses());
-}, [dispatch]);
+  useEffect(() => {
+    dispatch(fetchAddresses());
+  }, [dispatch]);
 
   const handleAddAddress = (newAddress: any) => {
-  dispatch(createAddress(newAddress));
-};
-const handleSelectAddress = (id: number) => {
-  dispatch(selectAddress(id));
-};
+    dispatch(createAddress(newAddress));
+  };
+  const handleSelectAddress = (id: number) => {
+    dispatch(selectAddress(id));
+  };
 
-
-const handlePayNow = () => {
-    // 1. Kiểm tra địa chỉ và token (Giữ nguyên)
+  const handlePayNow = () => {
     if (!selectedAddress) {
-        alert("Please select an address before payment!");
-        return;
+      toast.error("Please select an address before payment!");
+      return;
     }
     if (!token) {
-        alert("You must be logged in to place an order!");
-        return;
+      toast.error("You must be logged in to place an order!");
+      return;
     }
 
     dispatch(
-        createOrder({
-            addressId: selectedAddress,
-            jwt: token,
-            paymentGateway,
-        })
+      createOrder({
+        addressId: selectedAddress,
+        jwt: token,
+        paymentGateway,
+      })
     )
-    .unwrap() 
-    .then((paymentLinkResponse) => {
-        
+      .unwrap()
+      .then((paymentLinkResponse) => {
         const paymentUrl = paymentLinkResponse.payment_link_url;
-        
+
         if (paymentUrl) {
-            window.location.href = paymentUrl;
+          window.location.href = paymentUrl;
         } else {
-            alert("Order placed successfully! Proceeding to payment...");
-            // navigate('/order-confirmation');
+          toast.success("Order placed successfully! Proceeding to payment...");
         }
-    })
-    .catch((error) => {
-        let errorMessage = "An unknown error occurred while creating the order.";
-        
-        if (typeof error === 'object' && error !== null && error.message) {
-             errorMessage = error.message;
-        } else if (typeof error === 'string') {
-             errorMessage = error;
+      })
+      .catch((error) => {
+        let errorMessage =
+          "An unknown error occurred while creating the order.";
+
+        if (typeof error === "object" && error !== null && error.message) {
+          errorMessage = error.message;
+        } else if (typeof error === "string") {
+          errorMessage = error;
         }
 
-        alert(`Order Failed: ${errorMessage}`);
+        toast.error(`Order Failed: ${errorMessage}`);
         console.error("Order Creation Error:", error);
-    });
-};
-
+      });
+  };
 
   return (
     <>
@@ -130,21 +132,20 @@ const handlePayNow = () => {
             </div>
 
             <div className="space-y-3">
-  {addresses.length > 0 ? (
-    addresses.map((item) => (
-      <UserAddressCard
-        key={item.id}
-        address={item}
-        selected={selectedAddress === item.id}
-        onSelect={() => handleSelectAddress(item.id)}
-        onEdit={() => null}
-      />
-    ))
-  ) : (
-    <p>No addresses found. Please add one.</p>
-  )}
-</div>
-
+              {addresses.length > 0 ? (
+                addresses.map((item) => (
+                  <UserAddressCard
+                    key={item.id}
+                    address={item}
+                    selected={selectedAddress === item.id}
+                    onSelect={() => handleSelectAddress(item.id)}
+                    onEdit={() => null}
+                  />
+                ))
+              ) : (
+                <p>No addresses found. Please add one.</p>
+              )}
+            </div>
           </div>
 
           {/* RIGHT: Payment + Pricing */}

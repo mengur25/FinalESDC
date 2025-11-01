@@ -1,6 +1,6 @@
 import { AddPhotoAlternate, Close } from "@mui/icons-material";
 import {
-  // Bỏ Alert, Snackbar vì đã dùng toast
+  // Bỏ toast.error, Snackbar vì đã dùng toast
   Button,
   CircularProgress,
   FormControl,
@@ -10,7 +10,7 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  // Bỏ Snackbar, Alert
+  // Bỏ Snackbar, toast.error
   TextField,
 } from "@mui/material";
 import { useFormik } from "formik";
@@ -55,7 +55,9 @@ const AddProduct = () => {
   const [uploadImage, setUploadingImage] = useState(false);
   const dispatch = useAppDispatch();
 
-  const { loading, error } = useAppSelector((state: any) => state.sellerProduct);
+  const { loading, error } = useAppSelector(
+    (state: any) => state.sellerProduct
+  );
 
   const formik = useFormik({
     initialValues: {
@@ -82,9 +84,9 @@ const AddProduct = () => {
         toast.success(" Product created successfully!");
         resetForm(); // Reset form sau khi thành công
       } else if (createProduct.rejected.match(resultAction)) {
-        const errorMessage = resultAction.payload 
-            ? resultAction.payload.toString() 
-            : " Failed to create product. Please check the data.";
+        const errorMessage = resultAction.payload
+          ? resultAction.payload.toString()
+          : " Failed to create product. Please check the data.";
         toast.error(errorMessage);
       }
     },
@@ -96,12 +98,12 @@ const AddProduct = () => {
 
     setUploadingImage(true);
     try {
-        const image = await uploadToCloudinary(file);
-        formik.setFieldValue("images", [...formik.values.images, image]);
+      const image = await uploadToCloudinary(file);
+      formik.setFieldValue("images", [...formik.values.images, image]);
     } catch (error) {
-        toast.error("Error uploading image to Cloudinary.");
+      toast.error("Error uploading image to Cloudinary.");
     } finally {
-        setUploadingImage(false);
+      setUploadingImage(false);
     }
   };
 
@@ -116,7 +118,6 @@ const AddProduct = () => {
       return child.parentCategoryId === parentCategoryId;
     });
   };
-
 
   return (
     <div>
@@ -243,12 +244,8 @@ const AddProduct = () => {
               type="number"
               value={formik.values.quantity}
               onChange={formik.handleChange}
-              error={
-                formik.touched.quantity && Boolean(formik.errors.quantity)
-              }
-              helperText={
-                formik.touched.quantity && formik.errors.quantity
-              }
+              error={formik.touched.quantity && Boolean(formik.errors.quantity)}
+              helperText={formik.touched.quantity && formik.errors.quantity}
               required
               InputProps={{ inputProps: { min: 0 } }}
             />
@@ -348,7 +345,9 @@ const AddProduct = () => {
                   <em>None</em>
                 </MenuItem>
                 {mainCategory.map((item) => (
-                  <MenuItem key={item.categoryId} value={item.categoryId}>{item.name}</MenuItem>
+                  <MenuItem key={item.categoryId} value={item.categoryId}>
+                    {item.name}
+                  </MenuItem>
                 ))}
               </Select>
               {formik.touched.category && formik.errors.category && (
@@ -376,7 +375,9 @@ const AddProduct = () => {
                 </MenuItem>
                 {formik.values.category &&
                   categoryTwo[formik.values.category]?.map((item) => (
-                    <MenuItem key={item.categoryId} value={item.categoryId}>{item.name}</MenuItem>
+                    <MenuItem key={item.categoryId} value={item.categoryId}>
+                      {item.name}
+                    </MenuItem>
                   ))}
               </Select>
               {formik.touched.category && formik.errors.category && (
@@ -407,7 +408,9 @@ const AddProduct = () => {
                     categoryThree[formik.values.category],
                     formik.values.category2
                   )?.map((item: any) => (
-                    <MenuItem key={item.categoryId} value={item.categoryId}>{item.name}</MenuItem>
+                    <MenuItem key={item.categoryId} value={item.categoryId}>
+                      {item.name}
+                    </MenuItem>
                   ))}
               </Select>
               {formik.touched.category && formik.errors.category && (
@@ -424,7 +427,7 @@ const AddProduct = () => {
             fullWidth
             type="submit"
             // Hiển thị loading từ Redux state
-            disabled={loading} 
+            disabled={loading}
           >
             {loading ? (
               <CircularProgress
@@ -437,7 +440,6 @@ const AddProduct = () => {
           </Button>
         </Grid2>
       </form>
-
     </div>
   );
 };

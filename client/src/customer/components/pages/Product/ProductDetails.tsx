@@ -1,7 +1,10 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../../State/Store";
-import { fetchProductById, fetchAllProducts } from "../../../../State/Customer/ProductSlice";
+import {
+  fetchProductById,
+  fetchAllProducts,
+} from "../../../../State/Customer/ProductSlice";
 import {
   Button,
   Divider,
@@ -36,8 +39,8 @@ import {
 import ReviewCard from "../Review/ReviewCard";
 import { Product } from "../../../../types/ProductTypes";
 import Review from "./../Review/Review"; // Assuming this is a React component, not a type
+import toast from "react-hot-toast";
 // Trong ProductDetails.tsx
-
 
 const ReviewSummarySection = ({ productId }: { productId: number }) => {
   const dispatch = useAppDispatch();
@@ -46,21 +49,18 @@ const ReviewSummarySection = ({ productId }: { productId: number }) => {
     (state: any) => state.review
   );
 
-  
-
   useEffect(() => {
     if (productId) {
       dispatch(fetchReviewsByProductId(productId));
     }
   }, [dispatch, productId]);
 
-
   useEffect(() => {
     if (productId) {
-        dispatch(fetchProductById(Number(productId)));
-        dispatch(fetchAllProducts({})); 
+      dispatch(fetchProductById(Number(productId)));
+      dispatch(fetchAllProducts({}));
     }
-}, [productId, dispatch]);
+  }, [productId, dispatch]);
 
   const handleDeleteReview = (reviewId: number) => {
     const jwt = localStorage.getItem("jwt") || "";
@@ -112,14 +112,14 @@ const ProductDetails = () => {
 
   const handleAddToCart = () => {
     if (!jwt) {
-      alert("Please login to add items to the cart");
+      toast.error("Please login to add items to the cart");
       return;
     }
 
     if (!currentProduct?.id) return;
 
     if (!selectedSize) {
-      alert("Please select a size before adding to cart");
+      toast.error("Please select a size before adding to cart");
       return;
     }
 
@@ -187,8 +187,6 @@ const ProductDetails = () => {
             {currentProduct.seller?.businessDetails.bussinessName}
           </h1>
           <p className="text-gray-500 font-semibold">{currentProduct.title}</p>
-
-
 
           <div className="price flex items-center gap-3 mt-5 text-2xl">
             <span className="font-sans text-gray-800">

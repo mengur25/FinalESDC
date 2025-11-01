@@ -8,7 +8,9 @@ import {
   fetchOrderById,
   fetchOrderItemById,
   cancelOrder,
+  markOrderAsDelivered,
 } from "../../../../State/Customer/orderSlice";
+import toast from "react-hot-toast";
 
 const formatCurrency = (amount: number | undefined): string => {
   if (amount === undefined || amount === null) return "$0.00";
@@ -32,7 +34,8 @@ const OrderDetails = () => {
 
   const orderCreationDate = currentOrder?.orderDate || currentOrder?.createAt;
   const sellerBusinessName =
-    orderItem?.product?.seller?.businessDetails?.bussinessName;
+    orderItem?.product?.seller?.businessDetails?.bussinessName ||
+    "Nguyen Duong Store";
 
   useEffect(() => {
     if (orderId) {
@@ -52,8 +55,8 @@ const OrderDetails = () => {
       )
     ) {
       dispatch(cancelOrder({ orderId: currentOrder.id, jwt }))
-        .then(() => alert("Order successfully cancelled."))
-        .catch((err) => alert("Failed to cancel order: " + err));
+        .then(() => toast.error("Order successfully cancelled."))
+        .catch((err) => toast.error("Failed to cancel order: " + err));
     }
   };
 
@@ -73,6 +76,23 @@ const OrderDetails = () => {
       </Box>
     );
   }
+
+  const handleMarkAsDelivered = () => {
+    if (!currentOrder || !currentOrder.id) return;
+    
+    if (
+      window.confirm(
+        "Are you sure you want to confirm receipt? This will mark the order as delivered."
+      )
+    ) {
+      dispatch(markOrderAsDelivered({ orderId: currentOrder.id, jwt }))
+        .then(() => toast.success("Order successfully marked as DELIVERED!"))
+        .catch((err) => toast.error("Failed to confirm delivery: " + err));
+    }
+  };
+
+  const showDeliveredButton = 
+      orderStatus === "SHIPPED" || orderStatus === "ARRIVING" || orderStatus === "CONFIRMED";
 
   return (
     <Box className="space-y-5">
@@ -160,17 +180,39 @@ const OrderDetails = () => {
         </p>
       </div>
 
-      <div className="p-10">
+      <div className="p-10 flex gap-4">
         <Button
           color="error"
-          sx={{ py: "0.7rem" }}
+          sx={{ py: "0.7rem", flexGrow: 1 }}
           variant="outlined"
-          fullWidth
           onClick={handleCancelOrder}
           disabled={orderStatus === "DELIVERED" || orderStatus === "CANCELLED"}
         >
           {orderStatus === "CANCELLED" ? "Order Canceled" : "Cancel Order"}
         </Button>
+        
+        {showDeliveredButton && orderStatus !== "DELIVERED" && (
+          <Button
+            color="success"
+            sx={{ py: "0.7rem", flexGrow: 1 }}
+            variant="contained"
+            onClick={handleMarkAsDelivered}
+          >
+            Mark As Delivered
+          </Button>
+        )}
+        
+        {orderStatus === "DELIVERED" && (
+          <Button
+            color="success"
+            sx={{ py: "0.7rem", flexGrow: 1 }}
+            variant="contained"
+            disabled
+          >
+            Delivered
+          </Button>
+        )}
+        
       </div>
     </Box>
   );

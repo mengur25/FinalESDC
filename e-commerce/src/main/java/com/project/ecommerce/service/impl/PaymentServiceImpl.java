@@ -1,5 +1,6 @@
 package com.project.ecommerce.service.impl;
 
+import com.project.ecommerce.domain.OrderStatus;
 import com.project.ecommerce.domain.PaymentOrderStatus;
 import com.project.ecommerce.domain.PaymentStatus;
 import com.project.ecommerce.model.Order;
@@ -7,6 +8,7 @@ import com.project.ecommerce.model.PaymentOrder;
 import com.project.ecommerce.model.User;
 import com.project.ecommerce.repository.OrderRepository;
 import com.project.ecommerce.repository.PaymentOrderRepository;
+import com.project.ecommerce.service.OrderService;
 import com.project.ecommerce.service.PaymentService;
 import com.razorpay.Payment;
 import com.razorpay.PaymentLink;
@@ -16,6 +18,7 @@ import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
 import com.stripe.param.checkout.SessionCreateParams;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.json.JSONObject;
 import org.springframework.stereotype.Service;
@@ -59,22 +62,42 @@ public class PaymentServiceImpl implements PaymentService {
         return paymentOrder;
     }
 
+
     @Override
+    @Transactional
     public Boolean ProceedPaymentOrder(PaymentOrder paymentOrder, String paymentId, String paymentLinkId) throws RazorpayException {
         if (paymentOrder.getStatus().equals(PaymentOrderStatus.PENDING)) {
-            RazorpayClient razorpay = new RazorpayClient(apiKey, apiSecret);
 
-            Payment payment = razorpay.payments.fetch(paymentId);
-            String status = payment.get("status");
-            if (status.equals("captured")) {
+            boolean isMockPayment = paymentId.startsWith("mock_");
+            String finalStatus = "failed";
+
+            if (isMockPayment) {
+                finalStatus = "captured";
+            } else {
+                RazorpayClient razorpay = new RazorpayClient(apiKey, apiSecret);
+                Payment payment = razorpay.payments.fetch(paymentId);
+                finalStatus = payment.get("status");
+            }
+
+            if (finalStatus.equals("captured")) {
                 Set<Order> orders = paymentOrder.getOrders();
+
                 for (Order order : orders) {
                     order.setPaymentStatus(PaymentStatus.COMPLETED);
+
+                    if (order.getOrderStatus() == OrderStatus.PENDING) {
+                        order.setOrderStatus(OrderStatus.CONFIRMED);
+
+                    }
+
                     orderRepository.save(order);
                 }
+
                 paymentOrder.setStatus(PaymentOrderStatus.SUCCESS);
+                paymentOrderRepository.save(paymentOrder);
                 return true;
             }
+
             paymentOrder.setStatus(PaymentOrderStatus.FAILED);
             paymentOrderRepository.save(paymentOrder);
             return false;
@@ -82,12 +105,16 @@ public class PaymentServiceImpl implements PaymentService {
         return false;
     }
 
+    // Trong PaymentServiceImpl.java
+
     @Override
     public PaymentLink createRazorpayPaymentLink(User user, Long amount, Long orderId) throws RazorpayException {
 
         JSONObject mockJson = new JSONObject();
+
         mockJson.put("short_url", "http://localhost:3000/payment-success?payment_id=mock_razorpay_success&payment_link_id=" + orderId);
-        mockJson.put("id", "mock_pl_id_" + orderId);
+
+        mockJson.put("id", orderId.toString());
 
         return new PaymentLink(mockJson);
     }

@@ -2,23 +2,23 @@ import React, { useState, useEffect } from 'react';
 import HomeCategoryTable from './HomeCategoryTable';
 import { useAppDispatch, useAppSelector } from '../../../State/Store';
 import { HomeCategory } from '../../../types/HomeCatgoryTypes';
-import UpdateHomeCategoryModal from './UpdateHomeCategoryModal'; // Giả định đường dẫn đến modal
+import UpdateHomeCategoryModal from './UpdateHomeCategoryModal'; 
 import { fetchHomeCategory } from '../../../State/Admin/adminSlice';
+import { TablePagination, Box } from '@mui/material'; // Thêm Box và TablePagination
 
 const ShopByCategoryTable = () => {
     const dispatch = useAppDispatch();
-    // Lấy dữ liệu từ Redux Store. Giả định `customer.homePageData` là nơi lưu trữ dữ liệu trang chủ.
     const { customer } = useAppSelector((store: any) => store); 
     const { categoryUpdated } = useAppSelector((store: any) => store.homeCategory);
 
-    // State quản lý Modal
     const [openModal, setOpenModal] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<HomeCategory | null>(null);
 
-    // Dữ liệu hiển thị (Đảm bảo không null)
+    // **[BỔ SUNG STATE PAGINATION]**
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(5);
+
     const tableData: HomeCategory[] = customer.homePageData?.shopByCategories as HomeCategory[] || [];
-    
-    // --- Handlers ---
     
     const handleEditClick = (category: HomeCategory) => {
         setSelectedCategory(category);
@@ -30,40 +30,68 @@ const ShopByCategoryTable = () => {
         setSelectedCategory(null);
     };
 
-    // Khi modal đóng thành công, dispatch action để fetch lại dữ liệu trang chủ
     const handleUpdateSuccess = () => {
-
         dispatch(fetchHomeCategory()); 
     };
 
-    // Theo dõi trạng thái categoryUpdated để có thể phản hồi sau khi update
     useEffect(() => {
         if (categoryUpdated) {
             handleUpdateSuccess();
         }
-    }, [categoryUpdated]);
+    }, [categoryUpdated, dispatch]);
+    
+    // **[BỔ SUNG HANDLERS PAGINATION]**
+    const handleChangePage = (event: unknown, newPage: number) => {
+        setPage(newPage);
+    };
+
+    const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0);
+    };
+
+    // **[LOGIC CẮT LÁT DỮ LIỆU]**
+    const categoriesToDisplay = React.useMemo(() => {
+        return tableData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+    }, [tableData, page, rowsPerPage]);
 
 
     return (
-        <div>
+        <Box>
+            <div className="mt-20 space-y-3 mb-5">
+        <div className="text-lg">
+
             <h2>Shop By Category Management</h2>
+        </div>
+        </div>
             
-            {/* 1. Truyền hàm xử lý sự kiện Edit vào Table */}
             <HomeCategoryTable 
-                data={tableData} 
+                page={page}
+                rowsPerPage={rowsPerPage}
+                data={categoriesToDisplay} 
                 onEdit={handleEditClick} 
             />
 
-            {/* 2. Hiển thị Modal chỉnh sửa */}
+            <TablePagination
+                rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
+                component="div"
+                count={tableData.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+            />
+
+
             {selectedCategory && (
                 <UpdateHomeCategoryModal
                     open={openModal}
                     onClose={handleModalClose}
                     categoryToEdit={selectedCategory}
-                    onSuccess={handleModalClose} // Gọi handleModalClose để đóng modal sau khi thành công
+                    onSuccess={handleModalClose} 
                 />
             )}
-        </div>
+        </Box>
     );
 };
 

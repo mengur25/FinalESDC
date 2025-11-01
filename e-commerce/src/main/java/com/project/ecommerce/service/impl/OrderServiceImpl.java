@@ -57,12 +57,10 @@ public class OrderServiceImpl implements OrderService {
             Long sellerId = entry.getKey();
             List<CartItem> items = entry.getValue();
 
-            // Tính tổng giá dựa trên giá bán (Selling Price)
             int totalOrderPrice = items.stream().mapToInt(
                     CartItem::getSellingPrice
             ).sum();
 
-            // Tính tổng MRP Price (nếu cần)
             int totalMrpPrice = items.stream().mapToInt(
                     CartItem::getMrpPrice
             ).sum();
@@ -73,12 +71,12 @@ public class OrderServiceImpl implements OrderService {
             createdOrder.setUser(user);
             createdOrder.setSellerId(sellerId);
 
-            // Đặt TotalMrpPrice và TotalSellingPrice chính xác
             createdOrder.setTotalMrpPrice(totalMrpPrice);
-            createdOrder.setTotalSellingPrice(totalOrderPrice); // Sử dụng Selling Price cho giá cuối cùng
+            createdOrder.setTotalSellingPrice(totalOrderPrice);
 
             createdOrder.setTotalItem(totalItem);
             createdOrder.setShippingAddress(finalShippingAddress);
+
             createdOrder.setOrderStatus(OrderStatus.PENDING);
             createdOrder.getPaymentDetails().setStatus(PaymentStatus.PENDING);
 
@@ -88,6 +86,12 @@ public class OrderServiceImpl implements OrderService {
 
             List<OrderItem> orderItems = new ArrayList<>();
             for(CartItem item: items){
+                productService.decreaseProductQuantity(
+                        item.getProduct().getId(),
+                        item.getSize(),
+                        item.getQuantity()
+                );
+
                 OrderItem orderItem = new OrderItem();
                 orderItem.setOrder(savedOrder);
                 orderItem.setMrpPrice(item.getMrpPrice());
@@ -102,11 +106,7 @@ public class OrderServiceImpl implements OrderService {
                 OrderItem savedOrderItem= orderItemRepository.save(orderItem);
                 orderItems.add(savedOrderItem);
                 purchasedCartItems.add(item);
-                productService.decreaseProductQuantity(
-                        item.getProduct().getId(),
-                        item.getSize(),
-                        item.getQuantity()
-                );
+
             }
         }
 
@@ -117,7 +117,6 @@ public class OrderServiceImpl implements OrderService {
         }
         return orders;
     }
-
 
 
     @Override

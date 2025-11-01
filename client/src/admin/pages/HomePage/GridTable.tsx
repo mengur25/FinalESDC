@@ -1,9 +1,12 @@
+// Trong GridTable.tsx
+
 import React, { useState, useEffect } from 'react';
 import HomeCategoryTable from './HomeCategoryTable';
 import { useAppDispatch, useAppSelector } from '../../../State/Store';
 import { HomeCategory } from '../../../types/HomeCatgoryTypes';
 import UpdateHomeCategoryModal from './UpdateHomeCategoryModal'; 
 import { fetchHomeCategory } from '../../../State/Admin/adminSlice';
+import { TablePagination, Box } from '@mui/material'; // Thêm Box và TablePagination
 
 const GridTable = () => {
     const dispatch = useAppDispatch();
@@ -13,6 +16,11 @@ const GridTable = () => {
     const [openModal, setOpenModal] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<HomeCategory | null>(null);
 
+    // **[STATE PAGINATION]**
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(5);
+    
+    // Dữ liệu gốc
     const tableData: HomeCategory[] = customer.homePageData?.grid as HomeCategory[] || [];
 
     const handleEditClick = (category: HomeCategory) => {
@@ -26,7 +34,6 @@ const GridTable = () => {
     };
 
     const handleUpdateSuccess = () => {
-        // Tải lại dữ liệu sau khi cập nhật thành công
         dispatch(fetchHomeCategory());
     };
 
@@ -36,13 +43,48 @@ const GridTable = () => {
         }
     }, [categoryUpdated]);
 
+    // **[HANDLERS PAGINATION]**
+    const handleChangePage = (event: unknown, newPage: number) => {
+        setPage(newPage);
+    };
+
+    const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0);
+    };
+    
+    // **[LOGIC PHÂN TRANG]** Dữ liệu hiển thị
+    const categoriesToDisplay = React.useMemo(() => {
+        return tableData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+    }, [tableData, page, rowsPerPage]);
+
+
     return (
-        <div>
+        <Box>
+            <div className="mt-20 space-y-3 mb-5">
+        <div className="text-lg">
+
             <h2>Home Grid Management</h2>
+        </div>
+        </div>
             <HomeCategoryTable 
-                data={tableData} 
+            rowsPerPage={rowsPerPage}
+            page={page}
+                data={categoriesToDisplay} 
                 onEdit={handleEditClick} 
             />
+            
+            {/* **[COMPONENT PAGINATION]** */}
+            <TablePagination
+                rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
+                component="div"
+                count={tableData.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+            />
+
             
             {selectedCategory && (
                 <UpdateHomeCategoryModal
@@ -52,7 +94,7 @@ const GridTable = () => {
                     onSuccess={handleModalClose}
                 />
             )}
-        </div>
+        </Box>
     );
 };
 

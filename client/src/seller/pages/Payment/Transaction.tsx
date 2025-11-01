@@ -7,7 +7,7 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
-import { CircularProgress, Typography } from "@mui/material";
+import { CircularProgress, Typography, TablePagination } from "@mui/material"; // Thêm TablePagination
 import { useAppDispatch, useAppSelector } from "../../../State/Store";
 import { fetchTransactionsBySeller } from "../../../State/Seller/transactionSlice";
 import { Order } from "../../../types/orderTypes";
@@ -66,18 +66,44 @@ export default function TransactionTable() {
   const { transactions, loading, error } = useAppSelector(
     (state: any) => state.transactions
   );
+  
+  // **[STATE MỚI]** Quản lý trạng thái phân trang
+  const [page, setPage] = React.useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
+
 
   React.useEffect(() => {
     dispatch(fetchTransactionsBySeller(localStorage.getItem("jwt") || ""));
   }, [dispatch]);
   
-  // Hàm trợ giúp để lấy giá tiền cuối cùng (Giả định Order có totalPrice)
+  // Hàm trợ giúp để lấy giá tiền cuối cùng
   const getFinalOrderAmount = (order: Order): number => {
-      // Dùng totalPrice nếu tồn tại. Đây là giá trị mong muốn sau coupon/shipping.
-      // Nếu không có, dùng totalSellingPrice (giá bán sản phẩm).
-      // Bạn cần kiểm tra model Order của mình để xem trường nào lưu giá cuối cùng.
       return (order as any).totalPrice || order.totalSellingPrice || 0; 
   }
+
+  // **[HÀM MỚI]** Xử lý thay đổi trang
+  const handleChangePage = (
+    event: React.MouseEvent<HTMLButtonElement> | null,
+    newPage: number
+  ) => {
+    setPage(newPage);
+  };
+
+  // **[HÀM MỚI]** Xử lý thay đổi số hàng trên mỗi trang
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0); 
+  };
+
+  const validTransactions = React.useMemo(() => {
+    return (transactions as Order[]).filter((item) => item.orderStatus !== "CANCELLED");
+  }, [transactions]);
+  
+  const emptyRows = 
+    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - validTransactions.length) : 0;
+
 
   return (
     <TableContainer component={Paper}>
@@ -87,7 +113,6 @@ export default function TransactionTable() {
             <StyledTableCell>Date</StyledTableCell>
             <StyledTableCell>Customer Email</StyledTableCell>
             <StyledTableCell align="right">Order ID</StyledTableCell>
-            {/* Sửa tiêu đề cột để phản ánh giá cuối cùng */}
             <StyledTableCell align="right">Final Amount</StyledTableCell> 
           </TableRow>
         </TableHead>
@@ -110,7 +135,7 @@ export default function TransactionTable() {
                 </p>
               </StyledTableCell>
             </StyledTableRow>
-          ) : transactions.length === 0 ? (
+          ) : validTransactions.length === 0 ? (
             <StyledTableRow>
               <StyledTableCell colSpan={4} align="center">
                 <Typography color="textSecondary">
@@ -119,8 +144,8 @@ export default function TransactionTable() {
               </StyledTableCell>
             </StyledTableRow>
           ) : (
-            (transactions as Order[])
-              .filter((item) => item.orderStatus !== "CANCELLED")
+            validTransactions
+              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               .map((item) => (
                 <StyledTableRow key={item.id}>
                   <StyledTableCell component="th" scope="row">
@@ -137,8 +162,23 @@ export default function TransactionTable() {
                 </StyledTableRow>
               ))
           )}
+          {emptyRows > 0 && (
+            <StyledTableRow style={{ height: 53 * emptyRows }}>
+              <StyledTableCell colSpan={4} />
+            </StyledTableRow>
+          )}
         </TableBody>
       </Table>
+      
+      <TablePagination
+        rowsPerPageOptions={[5, 10, 25]}
+        component="div"
+        count={validTransactions.length} 
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+      />
     </TableContainer>
   );
 }

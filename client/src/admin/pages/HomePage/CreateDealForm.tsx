@@ -17,7 +17,9 @@ import {
   createDeal,
   getAllHomeCategories,
 } from "../../../State/Admin/dealSlice";
-import { HomeCategory } from "../../../types/HomeCatgoryTypes"; 
+import { HomeCategory } from "../../../types/HomeCatgoryTypes";
+import toast from "react-hot-toast";
+import * as Yup from 'yup';
 
 interface CreateDealRequest {
   discount: number;
@@ -27,9 +29,19 @@ interface CreateDealRequest {
 interface DealRequestBody {
   discount: number;
   category: {
-    id: number; 
+    id: number;
   };
 }
+
+const validationSchema = Yup.object({
+  discount: Yup.number()
+    .required("Discount is required.")
+    .min(1, "Discount must be at least 1%")
+    .max(100, "Discount cannot exceed 100%."),
+  categoryId: Yup.string()
+    .required("Category selection is required."),
+});
+
 
 const CreateDealForm = () => {
   const dispatch = useAppDispatch();
@@ -44,18 +56,35 @@ const CreateDealForm = () => {
     dispatch(getAllHomeCategories());
   }, [dispatch]);
 
+  const uniqueCategories = React.useMemo(() => {
+    if (!homeCategories || homeCategories.length === 0) {
+      return [];
+    }
+    
+    const categoryMap = new Map();
+    
+    homeCategories.forEach((cat) => {
+      if (!categoryMap.has(cat.categoryId)) {
+        categoryMap.set(cat.categoryId, cat);
+      }
+    });
+
+    return Array.from(categoryMap.values());
+  }, [homeCategories]);
+
   const formik = useFormik<CreateDealRequest>({
     initialValues: {
-      discount: 0,
+      discount: 1,
       categoryId: "",
     },
+    validationSchema: validationSchema,
     onSubmit: (values, { resetForm }) => {
       const selectedCategory = homeCategories.find(
         (c) => c.categoryId === values.categoryId
       );
 
-      if (!selectedCategory || selectedCategory.id === undefined) {
-        alert(
+      if (!selectedCategory || !selectedCategory.id) {
+        toast.error(
           "Error: Please select a valid category or category ID is missing."
         );
         return;
@@ -69,11 +98,11 @@ const CreateDealForm = () => {
       dispatch(createDeal(dealData))
         .unwrap()
         .then(() => {
-          alert("Deal created successfully!");
+          toast.success("Deal created successfully!");
           resetForm();
         })
         .catch((err: string) => {
-          alert(`Failed to create deal: ${err}`);
+          toast.error(`Failed to create deal: ${err}`);
         });
     },
   });
@@ -117,7 +146,7 @@ const CreateDealForm = () => {
           <MenuItem value="">
             <em>Select Category</em>
           </MenuItem>
-          {homeCategories.map((category: HomeCategory) => (
+          {uniqueCategories.map((category: HomeCategory) => (
             <MenuItem key={category.id} value={category.categoryId}>
               {category.name}
             </MenuItem>
@@ -133,7 +162,7 @@ const CreateDealForm = () => {
         fullWidth
         sx={{ py: ".9rem" }}
         variant="contained"
-        disabled={loading || homeCategories.length === 0}
+        disabled={loading || homeCategories.length === 0 || !formik.isValid}
       >
         {loading ? (
           <CircularProgress size={24} color="inherit" />

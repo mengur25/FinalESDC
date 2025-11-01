@@ -16,26 +16,30 @@ import java.util.List;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@EqualsAndHashCode
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(name = "`order`")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
+    @EqualsAndHashCode.Include
     private Long id;
 
     private String orderId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @EqualsAndHashCode.Exclude
     private User user;
 
     private Long sellerId;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties({"order"})
+    @EqualsAndHashCode.Exclude
     private List<OrderItem> orderItems = new ArrayList<>();
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @EqualsAndHashCode.Exclude
     private Address shippingAddress;
 
     @Embedded
@@ -48,6 +52,10 @@ public class Order {
     private OrderStatus orderStatus;
     private int totalItem;
     private PaymentStatus paymentStatus = PaymentStatus.PENDING;
+
+    @EqualsAndHashCode.Exclude
     private LocalDateTime orderDate= LocalDateTime.now();
+
+    @EqualsAndHashCode.Exclude
     private LocalDateTime deliverDate= LocalDateTime.now().plusDays(7);
 }

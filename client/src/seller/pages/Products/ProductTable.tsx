@@ -21,6 +21,7 @@ import {
   Select,
   MenuItem,
   FormHelperText,
+  TablePagination, // **[THÊM]**
 } from "@mui/material";
 import { Edit, Close, AddPhotoAlternate } from "@mui/icons-material";
 import { useFormik } from "formik";
@@ -32,8 +33,9 @@ import {
 import { uploadToCloudinary } from "../../../Utils/uploadToCloudinary";
 import { Product, Category } from "../../../types/ProductTypes";
 import { colors } from "../../../customer/components/data/filter/color";
+import toast from "react-hot-toast";
 
-// --- STYLE GIỮ NGUYÊN ---
+// --- STYLE & MODAL CODE GIỮ NGUYÊN ---
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
     backgroundColor: theme.palette.common.black,
@@ -67,8 +69,6 @@ const modalStyle = {
   p: 4,
 };
 
-
-// ----------------- MODAL CẬP NHẬT CHI TIẾT (ĐÃ SỬA) -----------------
 interface DetailsModalProps {
   open: boolean;
   onClose: () => void;
@@ -80,261 +80,264 @@ const ProductDetailsModal: React.FC<DetailsModalProps> = ({
   onClose,
   product,
 }) => {
-  const dispatch = useAppDispatch();
-  const [uploading, setUploading] = useState(false);
-
-  const formik = useFormik({
-    initialValues: {
-      title: product?.title || "",
-      sellingPrice: product?.sellingPrice || 0,
-      mrpPrice: product?.mrpPrice || 0,
-      color: product?.color || "",
-      images: product?.images || [],
-      quantity: product?.quantity || 0,
-      
-      // CHỈ GIỮ LẠI SIZE
-      size: product?.sizes?.split(' ')[0] || "",
-    },
-    enableReinitialize: true,
-    onSubmit: async (values) => {
-      if (!product?.id) return;
-      
-      // KHÔNG CẦN TÌM CATEGORY OBJECT VÌ KHÔNG CHỈNH SỬA
-      
-      const productData: Partial<Product> = {
-        title: values.title,
-        sellingPrice: values.sellingPrice,
-        mrpPrice: values.mrpPrice,
-        color: values.color,
-        images: values.images,
-        quantity: values.quantity,
-        
-        // CẬP NHẬT SIZE
-        sizes: values.size, 
-        
-      };
-      
-      const jwt = localStorage.getItem("jwt") || "";
-      await dispatch(
-        updateProductDetails({ productId: product.id, productData })
-      );
-      
-      dispatch(fetchSellerProducts(jwt));
-
-      alert(`✅ Product "${productData.title || product.title}" updated successfully!`);
-      onClose();
-    },
-  });
-
-  const handleImageUpload = async (e: any) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setUploading(true);
-    const imageUrl = await uploadToCloudinary(file);
-    formik.setFieldValue("images", [...formik.values.images, imageUrl]);
-    setUploading(false);
-  };
-
-  const handleRemoveImage = (index: number) => {
-    const updated = [...formik.values.images];
-    updated.splice(index, 1);
-    formik.setFieldValue("images", updated);
-  };
-
-  return (
-    <Modal open={open} onClose={onClose}>
-      <Box sx={modalStyle} component="form" onSubmit={formik.handleSubmit}>
-        <Typography variant="h5" gutterBottom>
-          Edit Product
-        </Typography>
-        <Typography variant="subtitle1" color="textSecondary" sx={{ mb: 2 }}>
-          ID: {product?.id}
-        </Typography>
-
-        <Grid container spacing={2}>
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Product Title"
-              name="title"
-              value={formik.values.title}
-              onChange={formik.handleChange}
-            />
-          </Grid>
-
-          <Grid item xs={6}>
-            <TextField
-              fullWidth
-              label="MRP Price"
-              name="mrpPrice"
-              type="number"
-              value={formik.values.mrpPrice}
-              onChange={formik.handleChange}
-            />
-          </Grid>
-
-          <Grid item xs={6}>
-            <TextField
-              fullWidth
-              label="Selling Price"
-              name="sellingPrice"
-              type="number"
-              value={formik.values.sellingPrice}
-              onChange={formik.handleChange}
-            />
-          </Grid>
-
-          {/* Input Quantity (In Stock) */}
-          <Grid item xs={6}>
-            <TextField
-              fullWidth
-              label="Quantity (In Stock)"
-              name="quantity"
-              type="number"
-              value={formik.values.quantity}
-              onChange={formik.handleChange}
-              InputProps={{ inputProps: { min: 0 } }} 
-            />
-          </Grid>
-          
-          {/* Dropdown Size */}
-          <Grid item xs={6}>
-            <FormControl
-              fullWidth
-              error={formik.touched.size && Boolean(formik.errors.size)}
-            >
-              <InputLabel id="size-label">Size</InputLabel>
-              <Select
-                labelId="size-label"
-                id="size"
-                name="size"
-                value={formik.values.size}
+    // ... (ProductDetailsModal logic giữ nguyên)
+    const dispatch = useAppDispatch();
+    const [uploading, setUploading] = useState(false);
+  
+    const formik = useFormik({
+      initialValues: {
+        title: product?.title || "",
+        sellingPrice: product?.sellingPrice || 0,
+        mrpPrice: product?.mrpPrice || 0,
+        color: product?.color || "",
+        images: product?.images || [],
+        quantity: product?.quantity || 0,
+  
+        // CHỈ GIỮ LẠI SIZE
+        size: product?.sizes?.split(" ")[0] || "",
+      },
+      enableReinitialize: true,
+      onSubmit: async (values) => {
+        if (!product?.id) return;
+  
+        // KHÔNG CẦN TÌM CATEGORY OBJECT VÌ KHÔNG CHỈNH SỬA
+  
+        const productData: Partial<Product> = {
+          title: values.title,
+          sellingPrice: values.sellingPrice,
+          mrpPrice: values.mrpPrice,
+          color: values.color,
+          images: values.images,
+          quantity: values.quantity,
+  
+          // CẬP NHẬT SIZE
+          sizes: values.size,
+        };
+  
+        const jwt = localStorage.getItem("jwt") || "";
+        await dispatch(
+          updateProductDetails({ productId: product.id, productData })
+        );
+  
+        dispatch(fetchSellerProducts(jwt));
+  
+        toast.error(
+          `Product "${
+            productData.title || product.title
+          }" updated successfully!`
+        );
+        onClose();
+      },
+    });
+  
+    const handleImageUpload = async (e: any) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      setUploading(true);
+      const imageUrl = await uploadToCloudinary(file);
+      formik.setFieldValue("images", [...formik.values.images, imageUrl]);
+      setUploading(false);
+    };
+  
+    const handleRemoveImage = (index: number) => {
+      const updated = [...formik.values.images];
+      updated.splice(index, 1);
+      formik.setFieldValue("images", updated);
+    };
+  
+    return (
+      <Modal open={open} onClose={onClose}>
+        <Box sx={modalStyle} component="form" onSubmit={formik.handleSubmit}>
+          <Typography variant="h5" gutterBottom>
+            Edit Product
+          </Typography>
+          <Typography variant="subtitle1" color="textSecondary" sx={{ mb: 2 }}>
+            ID: {product?.id}
+          </Typography>
+  
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Product Title"
+                name="title"
+                value={formik.values.title}
                 onChange={formik.handleChange}
-                label="Size"
-              >
-                <MenuItem value="">
-                  <em>None</em>
-                </MenuItem>
-                <MenuItem value="Free">FREE</MenuItem>
-                <MenuItem value="S">S</MenuItem>
-                <MenuItem value="M">M</MenuItem>
-                <MenuItem value="L">L</MenuItem>
-                <MenuItem value="XL">XL</MenuItem>
-              </Select>
-              {formik.touched.size && formik.errors.size && (
-                <FormHelperText>{formik.errors.size}</FormHelperText>
-              )}
-            </FormControl>
-          </Grid>
-
-
-          {/* Dropdown chọn màu */}
-          <Grid item xs={12}>
-            <FormControl
-              fullWidth
-              error={formik.touched.color && Boolean(formik.errors.color)}
-            >
-              <InputLabel id="color-label">Color</InputLabel>
-              <Select
-                labelId="color-label"
-                id="color"
-                name="color"
-                value={formik.values.color}
+              />
+            </Grid>
+  
+            <Grid item xs={6}>
+              <TextField
+                fullWidth
+                label="MRP Price"
+                name="mrpPrice"
+                type="number"
+                value={formik.values.mrpPrice}
                 onChange={formik.handleChange}
-                label="Color"
+              />
+            </Grid>
+  
+            <Grid item xs={6}>
+              <TextField
+                fullWidth
+                label="Selling Price"
+                name="sellingPrice"
+                type="number"
+                value={formik.values.sellingPrice}
+                onChange={formik.handleChange}
+              />
+            </Grid>
+  
+            {/* Input Quantity (In Stock) */}
+            <Grid item xs={6}>
+              <TextField
+                fullWidth
+                label="Quantity (In Stock)"
+                name="quantity"
+                type="number"
+                value={formik.values.quantity}
+                onChange={formik.handleChange}
+                InputProps={{ inputProps: { min: 0 } }}
+              />
+            </Grid>
+  
+            {/* Dropdown Size */}
+            <Grid item xs={6}>
+              <FormControl
+                fullWidth
+                error={formik.touched.size && Boolean(formik.errors.size)}
               >
-                <MenuItem value="">
-                  <em>None</em>
-                </MenuItem>
-                {colors.map((color) => (
-                  <MenuItem key={color.name} value={color.name}>
-                    <div className="flex gap-3 items-center">
-                      <span
-                        style={{ backgroundColor: color.hex }}
-                        className={`h-5 w-5 rounded-full ${
-                          color.name === "White" ? "border" : ""
-                        }`}
-                      ></span>
-                      <p>{color.name}</p>
-                    </div>
+                <InputLabel id="size-label">Size</InputLabel>
+                <Select
+                  labelId="size-label"
+                  id="size"
+                  name="size"
+                  value={formik.values.size}
+                  onChange={formik.handleChange}
+                  label="Size"
+                >
+                  <MenuItem value="">
+                    <em>None</em>
                   </MenuItem>
-                ))}
-              </Select>
-              {formik.touched.color && formik.errors.color && (
-                <FormHelperText>{formik.errors.color}</FormHelperText>
-              )}
-            </FormControl>
-          </Grid>
-
-          {/* Ảnh sản phẩm */}
-          <Grid item xs={12}>
-            <Typography sx={{ mb: 1 }}>Product Images</Typography>
-
-            <input
-              type="file"
-              accept="image/*"
-              id="imageUpload"
-              style={{ display: "none" }}
-              onChange={handleImageUpload}
-            />
-            <label htmlFor="imageUpload">
-              <Button
-                component="span"
-                variant="outlined"
-                startIcon={<AddPhotoAlternate />}
-                disabled={uploading}
+                  <MenuItem value="Free">FREE</MenuItem>
+                  <MenuItem value="S">S</MenuItem>
+                  <MenuItem value="M">M</MenuItem>
+                  <MenuItem value="L">L</MenuItem>
+                  <MenuItem value="XL">XL</MenuItem>
+                </Select>
+                {formik.touched.size && formik.errors.size && (
+                  <FormHelperText>{formik.errors.size}</FormHelperText>
+                )}
+              </FormControl>
+            </Grid>
+  
+            {/* Dropdown chọn màu */}
+            <Grid item xs={12}>
+              <FormControl
+                fullWidth
+                error={formik.touched.color && Boolean(formik.errors.color)}
               >
-                {uploading ? "Uploading..." : "Upload Image"}
-              </Button>
-            </label>
-
-            <Box mt={2} display="flex" flexWrap="wrap" gap={1}>
-              {formik.values.images.map((url, index) => (
-                <Box key={index} position="relative">
-                  <img
-                    src={url}
-                    alt={`Image ${index + 1}`}
-                    style={{
-                      width: 70,
-                      height: 70,
-                      borderRadius: 6,
-                      objectFit: "cover",
-                      border: "1px solid #ccc",
-                    }}
-                  />
-                  <IconButton
-                    size="small"
-                    color="error"
-                    onClick={() => handleRemoveImage(index)}
-                    sx={{
-                      position: "absolute",
-                      top: -8,
-                      right: -8,
-                      background: "white",
-                      "&:hover": { background: "#fff" },
-                    }}
-                  >
-                    <Close fontSize="small" />
-                  </IconButton>
-                </Box>
-              ))}
-            </Box>
+                <InputLabel id="color-label">Color</InputLabel>
+                <Select
+                  labelId="color-label"
+                  id="color"
+                  name="color"
+                  value={formik.values.color}
+                  onChange={formik.handleChange}
+                  label="Color"
+                >
+                  <MenuItem value="">
+                    <em>None</em>
+                  </MenuItem>
+                  {colors.map((color) => (
+                    <MenuItem key={color.name} value={color.name}>
+                      <div className="flex gap-3 items-center">
+                        <span
+                          style={{ backgroundColor: color.hex }}
+                          className={`h-5 w-5 rounded-full ${
+                            color.name === "White" ? "border" : ""
+                          }`}
+                        ></span>
+                        <p>{color.name}</p>
+                      </div>
+                    </MenuItem>
+                  ))}
+                </Select>
+                {formik.touched.color && formik.errors.color && (
+                  <FormHelperText>{formik.errors.color}</FormHelperText>
+                )}
+              </FormControl>
+            </Grid>
+  
+            {/* Ảnh sản phẩm */}
+            <Grid item xs={12}>
+              <Typography sx={{ mb: 1 }}>Product Images</Typography>
+  
+              <input
+                type="file"
+                accept="image/*"
+                id="imageUpload"
+                style={{ display: "none" }}
+                onChange={handleImageUpload}
+              />
+              <label htmlFor="imageUpload">
+                <Button
+                  component="span"
+                  variant="outlined"
+                  startIcon={<AddPhotoAlternate />}
+                  disabled={uploading}
+                >
+                  {uploading ? <CircularProgress size={24} /> : "Upload Image"}
+                </Button>
+              </label>
+  
+              <Box mt={2} display="flex" flexWrap="wrap" gap={1}>
+                {formik.values.images.map((url, index) => (
+                  <Box key={index} position="relative">
+                    <img
+                      src={url}
+                      alt={`Image ${index + 1}`}
+                      style={{
+                        width: 70,
+                        height: 70,
+                        borderRadius: 6,
+                        objectFit: "cover",
+                        border: "1px solid #ccc",
+                      }}
+                    />
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() => handleRemoveImage(index)}
+                      sx={{
+                        position: "absolute",
+                        top: -8,
+                        right: -8,
+                        background: "white",
+                        "&:hover": { background: "#fff" },
+                      }}
+                    >
+                      <Close fontSize="small" />
+                    </IconButton>
+                  </Box>
+                ))}
+              </Box>
+            </Grid>
           </Grid>
-        </Grid>
-
-        <Box sx={{ mt: 3 }}>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={uploading}
-            fullWidth
-          >
-            {uploading ? <CircularProgress size={24} /> : "Save Changes"}
-          </Button>
+  
+          <Box sx={{ mt: 3 }}>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={uploading}
+              fullWidth
+            >
+              {"Save Changes"}
+            </Button>
+          </Box>
         </Box>
-      </Box>
-    </Modal>
-  );
+      </Modal>
+    );
 };
 
 // ----------------- BẢNG SẢN PHẨM (Component chính) -----------------
@@ -346,6 +349,10 @@ export function ProductTable() {
   const [openModal, setOpenModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
+  // **[STATE MỚI]** Quản lý trạng thái phân trang
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5); // Mặc định 5 hàng/trang
+
   useEffect(() => {
     dispatch(fetchSellerProducts(localStorage.getItem("jwt") || ""));
   }, [dispatch]);
@@ -354,6 +361,29 @@ export function ProductTable() {
     setSelectedProduct(product);
     setOpenModal(true);
   };
+  
+  // **[HÀM PHÂN TRANG]** Xử lý thay đổi trang
+  const handleChangePage = (event: unknown, newPage: number) => {
+    setPage(newPage);
+  };
+
+  // **[HÀM PHÂN TRANG]** Xử lý thay đổi số hàng trên mỗi trang
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0); // Reset về trang đầu tiên
+  };
+  
+  // Tính toán dữ liệu hiển thị trên trang hiện tại
+  const productsToDisplay = React.useMemo(() => {
+    if (!products) return [];
+    return products.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  }, [products, page, rowsPerPage]);
+  
+  const emptyRows =
+    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - products.length) : 0;
+
 
   return (
     <>
@@ -378,8 +408,14 @@ export function ProductTable() {
                   <CircularProgress />
                 </TableCell>
               </TableRow>
+            ) : productsToDisplay.length === 0 && !loading ? (
+                 <TableRow>
+                    <TableCell colSpan={7} align="center">
+                        <Typography color="textSecondary">No products found.</Typography>
+                    </TableCell>
+                </TableRow>
             ) : (
-              products.map((item: Product) => (
+              productsToDisplay.map((item: Product) => ( // Sử dụng productsToDisplay
                 <StyledTableRow key={item.id}>
                   <StyledTableCell>
                     <div className="flex gap-1 flex-wrap">
@@ -394,7 +430,9 @@ export function ProductTable() {
                     </div>
                   </StyledTableCell>
                   <StyledTableCell align="right">{item.title}</StyledTableCell>
-                  <StyledTableCell align="right">{item.mrpPrice}</StyledTableCell>
+                  <StyledTableCell align="right">
+                    {item.mrpPrice}
+                  </StyledTableCell>
                   <StyledTableCell align="right">
                     {item.sellingPrice}
                   </StyledTableCell>
@@ -411,18 +449,41 @@ export function ProductTable() {
                       <span>{item.color}</span>
                     </div>
                   </StyledTableCell>
-                  <StyledTableCell align="right">{item.quantity}</StyledTableCell>
                   <StyledTableCell align="right">
-                    <IconButton size="small" onClick={() => handleEditClick(item)}>
+                    {item.quantity}
+                  </StyledTableCell>
+                  <StyledTableCell align="right">
+                    <IconButton
+                      size="small"
+                      onClick={() => handleEditClick(item)}
+                    >
                       <Edit />
                     </IconButton>
                   </StyledTableCell>
                 </StyledTableRow>
               ))
             )}
+            {/* Thêm hàng trống */}
+            {emptyRows > 0 && (
+                <StyledTableRow style={{ height: 53 * emptyRows }}>
+                    <StyledTableCell colSpan={7} />
+                </StyledTableRow>
+            )}
           </TableBody>
         </Table>
       </TableContainer>
+      
+      {/* **[COMPONENT PAGINATION]** */}
+      <TablePagination
+        rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
+        component="div"
+        count={products.length} // Tổng số lượng sản phẩm
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+      />
+
 
       {selectedProduct && (
         <ProductDetailsModal
@@ -434,5 +495,4 @@ export function ProductTable() {
     </>
   );
 }
-
 export default ProductTable;

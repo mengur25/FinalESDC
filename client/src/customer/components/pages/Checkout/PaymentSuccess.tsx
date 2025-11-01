@@ -14,6 +14,7 @@ import {
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import { useDispatch } from "react-redux";
+import { paymentSuccess } from "../../../../State/Customer/orderSlice";
 
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
@@ -21,24 +22,30 @@ const PaymentSuccess = () => {
     "processing"
   );
   const dispatch = useDispatch();
+  const [orderIdToView, setOrderIdToView] = useState<string | null>(null);
 
-  // Lấy thông tin giao dịch từ URL
   const paymentId = searchParams.get("payment_id");
   const paymentLinkId = searchParams.get("payment_link_id");
+  const jwt = localStorage.getItem("jwt") || "";
 
   useEffect(() => {
-    if (paymentId && paymentLinkId) {
-      if (paymentId.startsWith("mock_")) {
-        const timer = setTimeout(() => {
+    if (paymentId && paymentLinkId && jwt) {
+
+      const payload = { paymentId, paymentLinkId, jwt };
+
+      dispatch(paymentSuccess(payload) as any)
+        .unwrap()
+        .then((response:any) => {
           setStatus("success");
-        }, 1000);
-        return () => clearTimeout(timer);
-      }
+        })
+        .catch((error:any) => {
+          console.error("Payment Verification Failed:", error);
+          setStatus("failed");
+        });
     } else {
       setStatus("failed");
     }
-  }, [paymentId, paymentLinkId]);
-
+  }, [dispatch, paymentId, paymentLinkId]); 
   const renderContent = () => {
     if (status === "processing") {
       return (
@@ -47,7 +54,8 @@ const PaymentSuccess = () => {
           icon={<CircularProgress size={20} color="inherit" />}
         >
           <AlertTitle>Processing Payment</AlertTitle>
-          We are confirming your transaction with the payment gateway.
+          We are confirming your transaction with the payment gateway. This may
+          take a moment.
         </Alert>
       );
     }
@@ -59,7 +67,8 @@ const PaymentSuccess = () => {
           icon={<CheckCircleOutlineIcon fontSize="inherit" />}
         >
           <AlertTitle>Payment Successful!</AlertTitle>
-          Your order has been placed and confirmed. Thank you for your purchase.
+          Your order has been placed and **automatically confirmed**. Thank you
+          for your purchase.
           <Typography variant="body2" sx={{ mt: 1 }}>
             Transaction ID: **{paymentId}**
           </Typography>

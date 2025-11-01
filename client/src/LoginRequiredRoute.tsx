@@ -1,4 +1,4 @@
-// LoginRequiredRoute.tsx
+// LoginRequiredRoute.tsx (Đã sửa)
 
 import React, { useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
@@ -11,14 +11,12 @@ const LoginRequiredRoute = () => {
     
     const accessToken = jwt || localStorage.getItem("jwt");
     const isLoggedIn = !!accessToken; 
+    
 
-    useEffect(() => {
-        if (!isLoggedIn) {
-            toast.error('You need to login to access this page!', { duration: 3000 });
-        }
-    }, [isLoggedIn]);
 
     if (!isLoggedIn) {
+
+        
         return <Navigate to="/" state={{ from: location }} replace />; 
     }
 

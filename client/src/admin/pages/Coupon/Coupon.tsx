@@ -7,7 +7,7 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
-import { Button, CircularProgress } from "@mui/material"; 
+import { Button, CircularProgress, TablePagination } from "@mui/material"; 
 import { Delete } from "@mui/icons-material";
 import { useAppDispatch, useAppSelector } from "../../../State/Store"; 
 import { Coupon as CouponType } from "../../../types/couponTypes"; 
@@ -35,6 +35,10 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 const Coupon = () => {
     const dispatch = useAppDispatch();
     const { coupons, loading, error } = useAppSelector((state: any) => state.coupon); 
+    
+    // **[STATE PAGINATION]**
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10); 
 
     useEffect(() => {
         dispatch(getAllCoupons());
@@ -54,6 +58,25 @@ const Coupon = () => {
             return dateString;
         }
     };
+    
+    // **[HANDLERS PAGINATION]**
+    const handleChangePage = (event: unknown, newPage: number) => {
+        setPage(newPage);
+    };
+
+    const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0);
+    };
+    
+    // Dữ liệu hiển thị trên trang hiện tại
+    const couponsToDisplay = React.useMemo(() => {
+        return coupons.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+    }, [coupons, page, rowsPerPage]);
+
+    const emptyRows =
+        page > 0 ? Math.max(0, (1 + page) * rowsPerPage - coupons.length) : 0;
+
 
     return (
         <TableContainer component={Paper}>
@@ -89,7 +112,7 @@ const Coupon = () => {
                             </StyledTableCell>
                         </StyledTableRow>
                     ) : (
-                        coupons.map((coupon: CouponType) => (
+                        couponsToDisplay.map((coupon: CouponType) => (
                             <StyledTableRow key={coupon.id}>
                                 <StyledTableCell component="th" scope="row">
                                     {coupon.code}
@@ -115,8 +138,23 @@ const Coupon = () => {
                             </StyledTableRow>
                         ))
                     )}
+                    {emptyRows > 0 && (
+                        <StyledTableRow style={{ height: 53 * emptyRows }}>
+                            <StyledTableCell colSpan={7} />
+                        </StyledTableRow>
+                    )}
                 </TableBody>
             </Table>
+            
+            <TablePagination
+                rowsPerPageOptions={[5, 10, 25]}
+                component="div"
+                count={coupons.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+            />
         </TableContainer>
     );
 };
