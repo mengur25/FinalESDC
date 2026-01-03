@@ -38,6 +38,7 @@ const formatCurrency = (amount: number | undefined): string => {
   }).format(amount);
 };
 
+// --- HÀM XỬ LÝ SẢN PHẨM & KHÁCH HÀNG ---
 
 const processBestSellingProducts = (orders: Order[]) => {
   const productMap = orders.reduce((acc, order) => {
@@ -60,7 +61,7 @@ const processBestSellingProducts = (orders: Order[]) => {
 
   return Object.values(productMap)
     .sort((a, b) => b.totalQuantity - a.totalQuantity)
-    .slice(0, 5); // Lấy 5 sản phẩm hàng đầu
+    .slice(0, 5); 
 };
 
 const processTopRevenueProducts = (orders: Order[]) => {
@@ -113,6 +114,7 @@ const processTopCustomers = (orders: Order[]) => {
     .slice(0, 5);
 };
 
+// --- HÀM XỬ LÝ DỮ LIỆU THỜI GIAN (Giữ nguyên) ---
 
 const processDailyData = (orders: Order[]) => {
   const dailyDataMap = orders.reduce((acc, order) => {
@@ -158,6 +160,8 @@ const processMonthlyData = (orders: Order[]) => {
   );
 };
 
+// --------------------------------------------------------------------
+
 const Dashboard = () => {
   const dispatch = useAppDispatch();
   const { report, loading: reportLoading, error: reportError } = useAppSelector(
@@ -167,29 +171,23 @@ const Dashboard = () => {
     (state: any) => state.transactions
   );
 
-    const { transactions } = useAppSelector((state: any) => state.transactions);
-    const calculatedTotalEarnings = useMemo(() => {
-        return (transactions as any[]).reduce((total, order) => {
-          if (order.orderStatus === "CANCELLED") {
+    // **[LOGIC TÍNH TỔNG DOANH THU GROSS]** Tính tất cả đơn hàng KHÔNG phải là CANCELLED
+    const totalEarnings = useMemo(() => {
+        if (!orders || orders.length === 0) return 0;
+
+        return (orders as Order[]).reduce((total, order) => {
+            if (order.orderStatus !== "CANCELLED") { 
+                return total + (order.totalSellingPrice || 0);
+            }
             return total;
-          }
-          const price = order.totalSellingPrice || 0;
-          return total + price;
         }, 0);
-      }, [transactions]);
-  const totalEarnings = report?.totalEarnings || calculatedTotalEarnings;
-  
-  const estimatedNetPayout = totalEarnings * 0.9; 
+    }, [orders]);
+    
+    const estimatedNetPayout = totalEarnings * 0.9; 
+    const displayValue = estimatedNetPayout; 
+    
+    const isLoading = reportLoading || orderLoading; // Loading khi report HOẶC orders đang tải
 
-  const displayValue = estimatedNetPayout; 
-
-  const isLoading = reportLoading && !report;
-    useEffect(() => {
-      const jwt = localStorage.getItem("jwt") || "";
-      if (jwt) {
-        dispatch(fetchSellerReport(jwt));
-      }
-    }, [dispatch]);
 
   const [startDate, setStartDate] = useState<Dayjs | null>(
     dayjs().subtract(30, "day")
@@ -206,6 +204,7 @@ const Dashboard = () => {
     }
   }, [dispatch, jwt]);
 
+  // Lọc Orders theo Date Range (Dùng cho Chart và Top Sales)
   const filteredOrders = useMemo(() => {
     if (!orders || orders.length === 0 || !startDate || !endDate) return [];
     const startTs = startDate.startOf("day").valueOf();
@@ -228,15 +227,16 @@ const Dashboard = () => {
 
   const dailyMonthData = useMemo(() => processDailyData(monthlyFilteredData), [monthlyFilteredData]);
 
+  // **[LOGIC ĐÃ SỬA]** Áp dụng bộ lọc ngày (filteredOrders) cho Top Sales Performance
+  const topSellingProducts = useMemo(() => processBestSellingProducts(filteredOrders), [filteredOrders]);
+  const topRevenueProducts = useMemo(() => processTopRevenueProducts(filteredOrders), [filteredOrders]);
+  const topCustomers = useMemo(() => processTopCustomers(filteredOrders), [filteredOrders]);
 
-  const topSellingProducts = useMemo(() => processBestSellingProducts(orders), [orders]);
-  const topRevenueProducts = useMemo(() => processTopRevenueProducts(orders), [orders]);
-  const topCustomers = useMemo(() => processTopCustomers(orders), [orders]);
+
+  const generalMonthlyData = useMemo(() => processMonthlyData(orders), [orders]); // Giữ nguyên, không dùng filter
 
 
-  const generalMonthlyData = useMemo(() => processMonthlyData(orders), [orders]);
-
-  if (reportLoading || orderLoading) {
+  if (isLoading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="80vh">
         <CircularProgress />
@@ -247,8 +247,6 @@ const Dashboard = () => {
     );
   }
 
-  
-
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box sx={{ p: 4, background: "#f5f5f5", minHeight: "100vh" }}>
@@ -256,37 +254,35 @@ const Dashboard = () => {
           Seller Dashboard
         </Typography>
         <Divider sx={{ mb: 4 }} />
-      <Card className="rounded-md sapce-y-4 p-5">
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center h-20">
-            <CircularProgress size={24} />
-            <Typography variant="body2" color="textSecondary">
-              Loading Report...
-            </Typography>
-          </div>
-        ) : reportError ? (
-          <Typography variant="body2" color="error">
-            Error loading report: {reportError}
-          </Typography>
-        ) : (
-          <>
-            <h1 className="text-gray-600 font-medium">
-              Total Earning (Gross Sales)
-            </h1>
-            <h1 className="font-bold text-xl pb-1">
-              {formatCurrency(totalEarnings)}
-            </h1>
-            <Divider />
-            <p className="text-gray-600 font-medium pt-1">
-              Net Payout (Estimated):{" "}
-              <strong>{formatCurrency(displayValue)}</strong>
-            </p>
-          </>
-        )}
-      </Card>
+        
+        {/* --- CARD TỔNG QUAN DOANH THU --- */}
+        <Card className="rounded-md sapce-y-4 p-5">
+            {reportError ? (
+                <Typography variant="body2" color="error">
+                    Error loading report: {reportError}
+                </Typography>
+            ) : (
+                <>
+                <h1 className="text-gray-600 font-medium">
+                    Total Earning (Gross Sales)
+                </h1>
+                <h1 className="font-bold text-xl pb-1">
+                    {formatCurrency(totalEarnings)}
+                </h1>
+                <Divider />
+                <p className="text-gray-600 font-medium pt-1">
+                    Net Payout (Estimated):{" "}
+                    <strong>{formatCurrency(displayValue)}</strong>
+                </p>
+                </>
+            )}
+        </Card>
+        
+        {/* --- Bộ lọc theo ngày --- */}
         <Box
           display="flex"
           gap={3}
+          mt={4}
           mb={5}
           alignItems="center"
           bgcolor="white"
@@ -311,6 +307,7 @@ const Dashboard = () => {
           />
         </Box>
 
+        {/* --- DAILY REVENUE & ORDERS (Filtered by Date Range) --- */}
         <Grid container spacing={4}>
           <Grid item xs={12} lg={6}>
             <Card elevation={3} sx={{ p: 2 }}>
@@ -354,9 +351,10 @@ const Dashboard = () => {
           </Grid>
         </Grid>
         
+        {/* --- TOP SALES PERFORMANCE (Filtered by Date Range) --- */}
         <Box sx={{ mt: 6, mb: 4 }}>
           <Typography variant="h5" gutterBottom fontWeight="bold" color="textPrimary">
-            Top Sales Performance
+            Top Sales Performance (Filtered)
           </Typography>
         </Box>
 
@@ -364,7 +362,7 @@ const Dashboard = () => {
           <Grid item xs={12} md={4}>
             <Card elevation={3} sx={{ p: 2 }}>
               <Typography variant="h6" gutterBottom color="primary.dark">
-                Best Selling Products (Quantity)
+                 Best Selling Products (Quantity)
               </Typography>
               <Divider sx={{ mb: 1 }} />
               <List>
@@ -380,7 +378,7 @@ const Dashboard = () => {
           <Grid item xs={12} md={4}>
             <Card elevation={3} sx={{ p: 2 }}>
               <Typography variant="h6" gutterBottom color="secondary.dark">
-                Top Revenue Products
+                 Top Revenue Products
               </Typography>
               <Divider sx={{ mb: 1 }} />
               <List>
@@ -396,7 +394,7 @@ const Dashboard = () => {
           <Grid item xs={12} md={4}>
             <Card elevation={3} sx={{ p: 2 }}>
               <Typography variant="h6" gutterBottom color="info.main">
-                Top Customers (Orders/Spending)
+                 Top Customers (Orders/Spending)
               </Typography>
               <Divider sx={{ mb: 1 }} />
               <List>
@@ -414,6 +412,7 @@ const Dashboard = () => {
         </Grid>
 
 
+        {/* --- Bộ chọn tháng --- */}
         <Box
           display="flex"
           alignItems="center"
@@ -437,6 +436,7 @@ const Dashboard = () => {
           />
         </Box>
 
+        {/* --- MONTHLY REVENUE & ORDERS (Filtered by Month) --- */}
         <Grid container spacing={4}>
           <Grid item xs={12} lg={6}>
             <Card elevation={3} sx={{ p: 2 }}>

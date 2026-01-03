@@ -54,5 +54,11 @@ public class ProductController {
                 ), HttpStatus.OK );
     }
 
+    @GetMapping("/all")
+    public ResponseEntity<List<Product>> getAllProductsSimple() {
+        List<Product> products = productService.findAllProductsSimple();
+
+        return new ResponseEntity<>(products, HttpStatus.OK);
+    }
 
 }

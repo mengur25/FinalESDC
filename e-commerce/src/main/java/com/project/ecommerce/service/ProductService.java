@@ -33,4 +33,5 @@ public interface ProductService {
     void decreaseProductQuantity(Long productId, String size, int quantity) throws Exception;
 
     void increaseProductQuantity(Long productId, String size, int quantity);
+    List<Product> findAllProductsSimple();
 }

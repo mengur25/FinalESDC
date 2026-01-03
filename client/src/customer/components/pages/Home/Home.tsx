@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import ElectricCategory from "./ElectricCategory/ElectricCategory";
 import CategoryGrid from "./CategoryGrid/CategoryGrid";
 import Deal from "../Deal/Deal";
@@ -7,9 +7,17 @@ import banner from "../../../../assets/banner.png";
 import { Button } from "@mui/material";
 import { StorefrontOutlined } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
+import ProductSlide from "../Product/ProductSlide";
+import { fetchAllProductsSimple } from "../../../../State/Customer/ProductSlice";
+import { useAppDispatch } from "../../../../State/Store";
 
 const Home = () => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  
+  useEffect(() => {
+        dispatch(fetchAllProductsSimple()); 
+    }, [dispatch]);
   return (
     <>
       <div className="space-y-5 lg:space-y-10 relative">
@@ -20,6 +28,12 @@ const Home = () => {
             Shop By Category
           </h1>
           <ShopByCategory />
+        </section>
+        <section className="pt-10 pb-20">
+          <h1 className="text-lg lg:text-4xl font-bold text-center text-primary pb-5 lg:pb-10">
+            Featured Product
+          </h1>
+          <ProductSlide />
         </section>
         <section className="pt-10 pb-20">
           <h1 className="text-lg lg:text-4xl font-bold text-center text-primary pb-5 lg:pb-10">

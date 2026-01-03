@@ -21,7 +21,7 @@ import {
   Select,
   MenuItem,
   FormHelperText,
-  TablePagination, // **[THÊM]**
+  TablePagination, 
 } from "@mui/material";
 import { Edit, Close, AddPhotoAlternate } from "@mui/icons-material";
 import { useFormik } from "formik";
@@ -35,7 +35,7 @@ import { Product, Category } from "../../../types/ProductTypes";
 import { colors } from "../../../customer/components/data/filter/color";
 import toast from "react-hot-toast";
 
-// --- STYLE & MODAL CODE GIỮ NGUYÊN ---
+// --- STYLES & MODAL STYLE ---
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
     backgroundColor: theme.palette.common.black,
@@ -69,6 +69,7 @@ const modalStyle = {
   p: 4,
 };
 
+// --- PRODUCT DETAILS MODAL (GIỮ NGUYÊN LOGIC CŨ) ---
 interface DetailsModalProps {
   open: boolean;
   onClose: () => void;
@@ -80,7 +81,6 @@ const ProductDetailsModal: React.FC<DetailsModalProps> = ({
   onClose,
   product,
 }) => {
-    // ... (ProductDetailsModal logic giữ nguyên)
     const dispatch = useAppDispatch();
     const [uploading, setUploading] = useState(false);
   
@@ -92,15 +92,11 @@ const ProductDetailsModal: React.FC<DetailsModalProps> = ({
         color: product?.color || "",
         images: product?.images || [],
         quantity: product?.quantity || 0,
-  
-        // CHỈ GIỮ LẠI SIZE
         size: product?.sizes?.split(" ")[0] || "",
       },
       enableReinitialize: true,
       onSubmit: async (values) => {
         if (!product?.id) return;
-  
-        // KHÔNG CẦN TÌM CATEGORY OBJECT VÌ KHÔNG CHỈNH SỬA
   
         const productData: Partial<Product> = {
           title: values.title,
@@ -109,8 +105,6 @@ const ProductDetailsModal: React.FC<DetailsModalProps> = ({
           color: values.color,
           images: values.images,
           quantity: values.quantity,
-  
-          // CẬP NHẬT SIZE
           sizes: values.size,
         };
   
@@ -157,115 +151,51 @@ const ProductDetailsModal: React.FC<DetailsModalProps> = ({
   
           <Grid container spacing={2}>
             <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Product Title"
-                name="title"
-                value={formik.values.title}
-                onChange={formik.handleChange}
-              />
+              <TextField fullWidth label="Product Title" name="title" value={formik.values.title} onChange={formik.handleChange} />
             </Grid>
   
             <Grid item xs={6}>
-              <TextField
-                fullWidth
-                label="MRP Price"
-                name="mrpPrice"
-                type="number"
-                value={formik.values.mrpPrice}
-                onChange={formik.handleChange}
-              />
+              <TextField fullWidth label="MRP Price" name="mrpPrice" type="number" value={formik.values.mrpPrice} onChange={formik.handleChange} />
             </Grid>
   
             <Grid item xs={6}>
-              <TextField
-                fullWidth
-                label="Selling Price"
-                name="sellingPrice"
-                type="number"
-                value={formik.values.sellingPrice}
-                onChange={formik.handleChange}
-              />
+              <TextField fullWidth label="Selling Price" name="sellingPrice" type="number" value={formik.values.sellingPrice} onChange={formik.handleChange} />
             </Grid>
   
-            {/* Input Quantity (In Stock) */}
             <Grid item xs={6}>
-              <TextField
-                fullWidth
-                label="Quantity (In Stock)"
-                name="quantity"
-                type="number"
-                value={formik.values.quantity}
-                onChange={formik.handleChange}
-                InputProps={{ inputProps: { min: 0 } }}
-              />
+              <TextField fullWidth label="Quantity (In Stock)" name="quantity" type="number" value={formik.values.quantity} onChange={formik.handleChange} InputProps={{ inputProps: { min: 0 } }} />
             </Grid>
   
-            {/* Dropdown Size */}
             <Grid item xs={6}>
-              <FormControl
-                fullWidth
-                error={formik.touched.size && Boolean(formik.errors.size)}
-              >
+              <FormControl fullWidth error={formik.touched.size && Boolean(formik.errors.size)}>
                 <InputLabel id="size-label">Size</InputLabel>
-                <Select
-                  labelId="size-label"
-                  id="size"
-                  name="size"
-                  value={formik.values.size}
-                  onChange={formik.handleChange}
-                  label="Size"
-                >
-                  <MenuItem value="">
-                    <em>None</em>
-                  </MenuItem>
+                <Select labelId="size-label" id="size" name="size" value={formik.values.size} onChange={formik.handleChange} label="Size">
+                  <MenuItem value=""><em>None</em></MenuItem>
                   <MenuItem value="Free">FREE</MenuItem>
                   <MenuItem value="S">S</MenuItem>
                   <MenuItem value="M">M</MenuItem>
                   <MenuItem value="L">L</MenuItem>
                   <MenuItem value="XL">XL</MenuItem>
                 </Select>
-                {formik.touched.size && formik.errors.size && (
-                  <FormHelperText>{formik.errors.size}</FormHelperText>
-                )}
+                {formik.touched.size && formik.errors.size && (<FormHelperText>{formik.errors.size}</FormHelperText>)}
               </FormControl>
             </Grid>
   
-            {/* Dropdown chọn màu */}
             <Grid item xs={12}>
-              <FormControl
-                fullWidth
-                error={formik.touched.color && Boolean(formik.errors.color)}
-              >
+              <FormControl fullWidth error={formik.touched.color && Boolean(formik.errors.color)}>
                 <InputLabel id="color-label">Color</InputLabel>
-                <Select
-                  labelId="color-label"
-                  id="color"
-                  name="color"
-                  value={formik.values.color}
-                  onChange={formik.handleChange}
-                  label="Color"
-                >
-                  <MenuItem value="">
-                    <em>None</em>
-                  </MenuItem>
+                <Select labelId="color-label" id="color" name="color" value={formik.values.color} onChange={formik.handleChange} label="Color">
+                  <MenuItem value=""><em>None</em></MenuItem>
                   {colors.map((color) => (
                     <MenuItem key={color.name} value={color.name}>
                       <div className="flex gap-3 items-center">
-                        <span
-                          style={{ backgroundColor: color.hex }}
-                          className={`h-5 w-5 rounded-full ${
-                            color.name === "White" ? "border" : ""
-                          }`}
-                        ></span>
+                        <span style={{ backgroundColor: color.hex }} className={`h-5 w-5 rounded-full ${color.name === "White" ? "border" : ""}`}></span>
                         <p>{color.name}</p>
                       </div>
                     </MenuItem>
                   ))}
                 </Select>
-                {formik.touched.color && formik.errors.color && (
-                  <FormHelperText>{formik.errors.color}</FormHelperText>
-                )}
+                {formik.touched.color && formik.errors.color && (<FormHelperText>{formik.errors.color}</FormHelperText>)}
               </FormControl>
             </Grid>
   
@@ -273,20 +203,9 @@ const ProductDetailsModal: React.FC<DetailsModalProps> = ({
             <Grid item xs={12}>
               <Typography sx={{ mb: 1 }}>Product Images</Typography>
   
-              <input
-                type="file"
-                accept="image/*"
-                id="imageUpload"
-                style={{ display: "none" }}
-                onChange={handleImageUpload}
-              />
+              <input type="file" accept="image/*" id="imageUpload" style={{ display: "none" }} onChange={handleImageUpload} />
               <label htmlFor="imageUpload">
-                <Button
-                  component="span"
-                  variant="outlined"
-                  startIcon={<AddPhotoAlternate />}
-                  disabled={uploading}
-                >
+                <Button component="span" variant="outlined" startIcon={<AddPhotoAlternate />} disabled={uploading}>
                   {uploading ? <CircularProgress size={24} /> : "Upload Image"}
                 </Button>
               </label>
@@ -294,29 +213,8 @@ const ProductDetailsModal: React.FC<DetailsModalProps> = ({
               <Box mt={2} display="flex" flexWrap="wrap" gap={1}>
                 {formik.values.images.map((url, index) => (
                   <Box key={index} position="relative">
-                    <img
-                      src={url}
-                      alt={`Image ${index + 1}`}
-                      style={{
-                        width: 70,
-                        height: 70,
-                        borderRadius: 6,
-                        objectFit: "cover",
-                        border: "1px solid #ccc",
-                      }}
-                    />
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => handleRemoveImage(index)}
-                      sx={{
-                        position: "absolute",
-                        top: -8,
-                        right: -8,
-                        background: "white",
-                        "&:hover": { background: "#fff" },
-                      }}
-                    >
+                    <img src={url} alt={`Image ${index + 1}`} style={{ width: 70, height: 70, borderRadius: 6, objectFit: "cover", border: "1px solid #ccc", }} />
+                    <IconButton size="small" color="error" onClick={() => handleRemoveImage(index)} sx={{ position: "absolute", top: -8, right: -8, background: "white", "&:hover": { background: "#fff" }, }} >
                       <Close fontSize="small" />
                     </IconButton>
                   </Box>
@@ -326,12 +224,7 @@ const ProductDetailsModal: React.FC<DetailsModalProps> = ({
           </Grid>
   
           <Box sx={{ mt: 3 }}>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={uploading}
-              fullWidth
-            >
+            <Button type="submit" variant="contained" disabled={uploading} fullWidth>
               {"Save Changes"}
             </Button>
           </Box>
@@ -346,12 +239,17 @@ export function ProductTable() {
   const { products, loading } = useAppSelector(
     (state: any) => state.sellerProduct
   );
+  
+  // **[LẤY SELLER ID HIỆN TẠI]** Giả định ID nằm trong state.auth.user hoặc state.seller.sellerProfile
+  const currentSellerId = useAppSelector(
+      (state: any) => state.auth.user?.id || state.seller.sellerProfile?.id
+  );
+
   const [openModal, setOpenModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-  // **[STATE MỚI]** Quản lý trạng thái phân trang
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5); // Mặc định 5 hàng/trang
+  const [rowsPerPage, setRowsPerPage] = useState(5); 
 
   useEffect(() => {
     dispatch(fetchSellerProducts(localStorage.getItem("jwt") || ""));
@@ -362,20 +260,17 @@ export function ProductTable() {
     setOpenModal(true);
   };
   
-  // **[HÀM PHÂN TRANG]** Xử lý thay đổi trang
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
   };
 
-  // **[HÀM PHÂN TRANG]** Xử lý thay đổi số hàng trên mỗi trang
   const handleChangeRowsPerPage = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0); // Reset về trang đầu tiên
+    setPage(0);
   };
   
-  // Tính toán dữ liệu hiển thị trên trang hiện tại
   const productsToDisplay = React.useMemo(() => {
     if (!products) return [];
     return products.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
@@ -415,53 +310,67 @@ export function ProductTable() {
                     </TableCell>
                 </TableRow>
             ) : (
-              productsToDisplay.map((item: Product) => ( // Sử dụng productsToDisplay
-                <StyledTableRow key={item.id}>
-                  <StyledTableCell>
-                    <div className="flex gap-1 flex-wrap">
-                      {item.images.map((image, index) => (
-                        <img
-                          key={index}
-                          className="w-20 rounded-md"
-                          src={image}
-                          alt={item.title}
-                        />
-                      ))}
-                    </div>
-                  </StyledTableCell>
-                  <StyledTableCell align="right">{item.title}</StyledTableCell>
-                  <StyledTableCell align="right">
-                    {item.mrpPrice}
-                  </StyledTableCell>
-                  <StyledTableCell align="right">
-                    {item.sellingPrice}
-                  </StyledTableCell>
-                  <StyledTableCell align="right">
-                    <div className="flex items-center justify-end gap-2">
-                      <span
-                        style={{
-                          backgroundColor:
-                            colors.find((c) => c.name === item.color)?.hex ||
-                            "transparent",
-                        }}
-                        className={`h-5 w-5 rounded-full border`}
-                      ></span>
-                      <span>{item.color}</span>
-                    </div>
-                  </StyledTableCell>
-                  <StyledTableCell align="right">
-                    {item.quantity}
-                  </StyledTableCell>
-                  <StyledTableCell align="right">
-                    <IconButton
-                      size="small"
-                      onClick={() => handleEditClick(item)}
-                    >
-                      <Edit />
-                    </IconButton>
-                  </StyledTableCell>
-                </StyledTableRow>
-              ))
+              productsToDisplay.map((item: Product) => {
+                  
+                  // **[LOGIC KIỂM TRA QUYỀN SỞ HỮU]**
+                  const isOwner = currentSellerId && item.seller?.id === currentSellerId;
+                  
+                  return (
+                      <StyledTableRow key={item.id}>
+                        <StyledTableCell>
+                          <div className="flex gap-1 flex-wrap">
+                            {item.images.map((image, index) => (
+                              <img
+                                key={index}
+                                className="w-20 rounded-md"
+                                src={image}
+                                alt={item.title}
+                              />
+                            ))}
+                          </div>
+                        </StyledTableCell>
+                        <StyledTableCell align="right">{item.title}</StyledTableCell>
+                        <StyledTableCell align="right">
+                          {item.mrpPrice}
+                        </StyledTableCell>
+                        <StyledTableCell align="right">
+                          {item.sellingPrice}
+                        </StyledTableCell>
+                        <StyledTableCell align="right">
+                          <div className="flex items-center justify-end gap-2">
+                            <span
+                              style={{
+                                backgroundColor:
+                                  colors.find((c) => c.name === item.color)?.hex ||
+                                  "transparent",
+                              }}
+                              className={`h-5 w-5 rounded-full border`}
+                            ></span>
+                            <span>{item.color}</span>
+                          </div>
+                        </StyledTableCell>
+                        <StyledTableCell align="right">
+                          {item.quantity}
+                        </StyledTableCell>
+                        
+                        <StyledTableCell align="right">
+                          {isOwner ? (
+                            <IconButton
+                              size="small"
+                              onClick={() => handleEditClick(item)}
+                            >
+                              <Edit />
+                            </IconButton>
+                          ) : (
+                            // Hiển thị nút bị vô hiệu hóa nếu không phải chủ sở hữu
+                            <IconButton size="small" disabled>
+                                <Edit color="disabled" />
+                            </IconButton>
+                          )}
+                        </StyledTableCell>
+                      </StyledTableRow>
+                  );
+              })
             )}
             {/* Thêm hàng trống */}
             {emptyRows > 0 && (
@@ -473,11 +382,10 @@ export function ProductTable() {
         </Table>
       </TableContainer>
       
-      {/* **[COMPONENT PAGINATION]** */}
       <TablePagination
         rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
         component="div"
-        count={products.length} // Tổng số lượng sản phẩm
+        count={products.length} 
         rowsPerPage={rowsPerPage}
         page={page}
         onPageChange={handleChangePage}
@@ -495,4 +403,5 @@ export function ProductTable() {
     </>
   );
 }
+
 export default ProductTable;

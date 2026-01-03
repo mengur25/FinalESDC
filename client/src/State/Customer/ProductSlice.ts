@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { api } from "../../config/Api";
 import { Product } from "../../types/ProductTypes";
 
@@ -65,6 +65,24 @@ export const fetchAllProducts = createAsyncThunk<any, any>(
   }
 );
 
+
+export const fetchAllProductsSimple = createAsyncThunk<any[], void>(
+    "product/fetchAllProducts",
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await api.get(`${API_URL}/all`); 
+            
+            console.log("All Products data fetched:", response.data); 
+            
+            return response.data; // Trả về mảng sản phẩm
+        } catch (error: any) {
+            console.error("Error fetching all products:", error);
+            return rejectWithValue(
+                error.response?.data?.message || "Failed to fetch all products"
+            );
+        }
+    }
+);
 interface ProductState {
   product: Product | null;
   products: Product[];
@@ -120,7 +138,21 @@ const productSlice = createSlice({
     builder.addCase(searchProduct.rejected, (state, action) => {
       state.loading = false;
       state.error = action.error.message || "Failed to fetch product";
-    });
+    })
+    builder.addCase(fetchAllProductsSimple.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        });
+
+        builder.addCase(fetchAllProductsSimple.fulfilled, (state, action: PayloadAction<any[]>) => {
+            state.loading = false;
+            state.products = action.payload; 
+        });
+
+        builder.addCase(fetchAllProductsSimple.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.payload as string || "An unknown error occurred";
+        });
   },
 });
 

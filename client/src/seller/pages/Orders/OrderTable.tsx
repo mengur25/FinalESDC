@@ -94,10 +94,21 @@ export default function OrderTable() {
   // Dữ liệu đơn hàng (lấy từ Redux)
   const orders = sellerOrder.orders || [];
   
-  // Dữ liệu hiển thị trên trang hiện tại
-  const ordersToDisplay = React.useMemo(() => {
-    return orders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-  }, [orders, page, rowsPerPage]);
+  const sortedOrders = React.useMemo(() => {
+        // Tạo bản sao của mảng và sắp xếp theo ngày (mới nhất lên trước)
+        return [...orders].sort((a, b) => {
+            const dateA = new Date(a.orderDate).getTime();
+            const dateB = new Date(b.orderDate).getTime();
+            // Sắp xếp giảm dần (DESC): dateB - dateA
+            return dateB - dateA;
+        });
+    }, [orders]); // Sắp xếp lại mỗi khi danh sách orders thay đổi
+
+    // Dữ liệu hiển thị trên trang hiện tại
+    const ordersToDisplay = React.useMemo(() => {
+        // **[SỬA]** Sử dụng danh sách đã sắp xếp (sortedOrders)
+        return sortedOrders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+    }, [sortedOrders, page, rowsPerPage]);
   
   const emptyRows =
     page > 0 ? Math.max(0, (1 + page) * rowsPerPage - orders.length) : 0;

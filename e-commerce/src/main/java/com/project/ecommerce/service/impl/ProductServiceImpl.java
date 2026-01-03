@@ -149,18 +149,22 @@ public class ProductServiceImpl implements ProductService {
             if(sizes != null && !sizes.isEmpty()){
                 predicates.add(criterialBuilder.equal(root.get("size"), sizes));
             }
-            if(minPrice != null && minPrice > 0 ){
+            if (minPrice != null && minPrice > 0) {
                 predicates.add(criterialBuilder.greaterThanOrEqualTo(root.get("sellingPrice"), minPrice));
             }
-            if(minPrice != null && minPrice > 0 ){
-                predicates.add(criterialBuilder.greaterThanOrEqualTo(root.get("mrpPrice"), maxPrice));
+            if (maxPrice != null && maxPrice > 0) {
+                predicates.add(criterialBuilder.lessThanOrEqualTo(root.get("sellingPrice"), maxPrice));
             }
             if(minDiscount != null  ){
                 predicates.add(criterialBuilder.greaterThanOrEqualTo(root.get("discountPercent"), minDiscount));
             }
 
-            if(stock != null && !stock.isEmpty() ){
-                predicates.add(criterialBuilder.greaterThanOrEqualTo(root.get("stock"), stock));
+            if (stock != null && !stock.isEmpty()) {
+                if (stock.equalsIgnoreCase("IN_STOCK")) {
+                    predicates.add(criterialBuilder.greaterThan(root.get("quantity"), 0));
+                } else if (stock.equalsIgnoreCase("OUT_OF_STOCK")) {
+                    predicates.add(criterialBuilder.lessThanOrEqualTo(root.get("quantity"), 0));
+                }
             }
 
             return criterialBuilder.and(predicates.toArray(new Predicate[0]));
@@ -238,5 +242,10 @@ public class ProductServiceImpl implements ProductService {
         product.setQuantity(product.getQuantity() + quantity);
 
         productRepository.save(product);
+    }
+
+    @Override
+    public List<Product> findAllProductsSimple() {
+        return productRepository.findAll();
     }
 }

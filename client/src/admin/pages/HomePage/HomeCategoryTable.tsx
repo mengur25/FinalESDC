@@ -45,9 +45,7 @@ export default function HomeCategoryTable({
   rowsPerPage,
   page,
 }: HomeCategoryTableProps) {
-  // **[LOGIC HÀNG TRỐNG]**
-  // data.length ở đây là số hàng HIỆN TẠI trên trang (<= rowsPerPage), KHÔNG phải tổng số hàng.
-  // Logic tính hàng trống đơn giản hơn vì dữ liệu đầu vào (data) đã được cắt lát.
+
   const emptyRows = rowsPerPage - data.length;
 
   return (
@@ -66,7 +64,6 @@ export default function HomeCategoryTable({
           {data.map((category, index) => (
             <StyledTableRow key={category.id}>
               <StyledTableCell component="th" scope="row">
-                {/* Sửa số thứ tự để phản ánh trang hiện tại */}
                 {page * rowsPerPage + index + 1}
               </StyledTableCell>
               <StyledTableCell component="th" scope="row">
@@ -89,7 +86,6 @@ export default function HomeCategoryTable({
               </StyledTableCell>
             </StyledTableRow>
           ))}
-          {/* **[THÊM HÀNG TRỐNG]** */}
           {emptyRows > 0 && (
             <StyledTableRow style={{ height: 53 * emptyRows }}>
               <StyledTableCell colSpan={5} />

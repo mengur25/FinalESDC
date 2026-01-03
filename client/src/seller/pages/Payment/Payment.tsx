@@ -10,6 +10,7 @@ import TransactionTable from "./Transaction";
 import { useAppSelector, useAppDispatch } from "../../../State/Store";
 import { Order } from "../../../types/orderTypes";
 import { fetchSellerReport } from "../../../State/Seller/SellerSlice"; 
+
 const formatCurrency = (amount: number | undefined): string => {
   if (amount === undefined || amount === null) return "$0.00";
   return new Intl.NumberFormat("en-US", {
@@ -35,22 +36,27 @@ const Payment = () => {
     }
   }, [dispatch]);
 
+  // **[LOGIC ĐÃ SỬA]** Tính tất cả đơn hàng KHÔNG phải là CANCELLED
   const calculatedTotalEarnings = useMemo(() => {
-    return (transactions as any[]).reduce((total, order) => {
-      if (order.orderStatus === "CANCELLED") {
-        return total;
+    const validTransactions: Order[] = transactions || []; 
+    
+    return validTransactions.reduce((total, order) => {
+      // **Chỉ loại trừ đơn hàng CANCELLED**
+      if (order.orderStatus !== "CANCELLED") { 
+        const price = order.totalSellingPrice || 0;
+        return total + price;
       }
-      const price = order.totalSellingPrice || 0;
-      return total + price;
+      return total;
     }, 0);
   }, [transactions]);
-  const totalEarnings = report?.totalEarnings || calculatedTotalEarnings;
+  
+  const totalEarnings = calculatedTotalEarnings;
   
   const estimatedNetPayout = totalEarnings * 0.9; 
 
   const displayValue = estimatedNetPayout; 
 
-  const isLoading = reportLoading && !report;
+  const isLoading = reportLoading && transactions.length === 0;
 
   return (
     <div>
@@ -76,7 +82,7 @@ const Payment = () => {
             </h1>
             <Divider />
             <p className="text-gray-600 font-medium pt-1">
-              Net Payout (Estimated):{" "}
+              Net Payout:{" "}
               <strong>{formatCurrency(displayValue)}</strong>
             </p>
           </>

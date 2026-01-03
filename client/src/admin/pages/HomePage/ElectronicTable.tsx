@@ -64,7 +64,10 @@ const ElectronicTable = () => {
       page * rowsPerPage + rowsPerPage
     );
   }, [tableData, page, rowsPerPage]);
-
+const handleUpdateSuccessAndClose = () => {
+    handleUpdateSuccess(); // Fetch lại dữ liệu
+    handleModalClose(); // Đóng modal
+};
   return (
     <Box>
       <div className="mt-20 space-y-3 mb-5">
@@ -76,7 +79,7 @@ const ElectronicTable = () => {
       <HomeCategoryTable
         rowsPerPage={rowsPerPage}
         page={page}
-        data={categoriesToDisplay} // **[SỬA]** Truyền dữ liệu đã cắt lát
+        data={categoriesToDisplay}
         onEdit={handleEditClick}
       />
 
@@ -95,7 +98,7 @@ const ElectronicTable = () => {
           open={openModal}
           onClose={handleModalClose}
           categoryToEdit={selectedCategory}
-          onSuccess={handleModalClose}
+          onSuccess={handleUpdateSuccessAndClose}
         />
       )}
     </Box>

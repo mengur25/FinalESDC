@@ -48,17 +48,17 @@ const formatDate = (dateString: string | Date | undefined) => {
   }
 };
 
-
 const formatErrorMessage = (err: any): string => {
-  if (typeof err === 'string') return err;
-  if (typeof err === 'object' && err !== null) {
-    return (err.message as string) || 
-               (err.error as string) || 
-               `API Error (Status: ${err.status}) - Check console.`;
+  if (typeof err === "string") return err;
+  if (typeof err === "object" && err !== null) {
+    return (
+      (err.message as string) ||
+      (err.error as string) ||
+      `API Error (Status: ${err.status}) - Check console.`
+    );
   }
   return "Unknown Error";
 };
-
 
 export default function TransactionTable() {
   const dispatch = useAppDispatch();
@@ -66,20 +66,19 @@ export default function TransactionTable() {
   const { transactions, loading, error } = useAppSelector(
     (state: any) => state.transactions
   );
-  
+
   // **[STATE MỚI]** Quản lý trạng thái phân trang
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
 
-
   React.useEffect(() => {
     dispatch(fetchTransactionsBySeller(localStorage.getItem("jwt") || ""));
   }, [dispatch]);
-  
+
   // Hàm trợ giúp để lấy giá tiền cuối cùng
   const getFinalOrderAmount = (order: Order): number => {
-      return (order as any).totalPrice || order.totalSellingPrice || 0; 
-  }
+    return (order as any).totalPrice || order.totalSellingPrice || 0;
+  };
 
   // **[HÀM MỚI]** Xử lý thay đổi trang
   const handleChangePage = (
@@ -94,16 +93,28 @@ export default function TransactionTable() {
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0); 
+    setPage(0);
   };
 
   const validTransactions = React.useMemo(() => {
-    return (transactions as Order[]).filter((item) => item.orderStatus !== "CANCELLED");
-  }, [transactions]);
-  
-  const emptyRows = 
-    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - validTransactions.length) : 0;
+    const filtered = (transactions as Order[]).filter(
+      (item) => item.orderStatus !== "CANCELLED"
+    );
 
+    // Tạo bản sao và sắp xếp theo ngày (Mới nhất lên trước)
+    return [...filtered].sort((a, b) => {
+      const dateA = new Date(a.orderDate).getTime();
+      const dateB = new Date(b.orderDate).getTime();
+
+      // Sắp xếp giảm dần (DESC): dateB - dateA
+      return dateB - dateA;
+    });
+  }, [transactions]);
+
+  const emptyRows =
+    page > 0
+      ? Math.max(0, (1 + page) * rowsPerPage - validTransactions.length)
+      : 0;
 
   return (
     <TableContainer component={Paper}>
@@ -113,7 +124,7 @@ export default function TransactionTable() {
             <StyledTableCell>Date</StyledTableCell>
             <StyledTableCell>Customer Email</StyledTableCell>
             <StyledTableCell align="right">Order ID</StyledTableCell>
-            <StyledTableCell align="right">Final Amount</StyledTableCell> 
+            <StyledTableCell align="right">Final Amount</StyledTableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -157,7 +168,7 @@ export default function TransactionTable() {
                   </StyledTableCell>
                   <StyledTableCell align="right">{item.id}</StyledTableCell>
                   <StyledTableCell align="right">
-                    {formatCurrency(getFinalOrderAmount(item))} 
+                    {formatCurrency(getFinalOrderAmount(item))}
                   </StyledTableCell>
                 </StyledTableRow>
               ))
@@ -169,11 +180,11 @@ export default function TransactionTable() {
           )}
         </TableBody>
       </Table>
-      
+
       <TablePagination
         rowsPerPageOptions={[5, 10, 25]}
         component="div"
-        count={validTransactions.length} 
+        count={validTransactions.length}
         rowsPerPage={rowsPerPage}
         page={page}
         onPageChange={handleChangePage}

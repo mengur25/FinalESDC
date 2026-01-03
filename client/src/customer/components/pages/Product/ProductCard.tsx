@@ -90,10 +90,10 @@ const ProductCard = ({ item }: { item: Product }) => {
             <p>{item.title}</p>
           </div>
           <div className="price flex items-center gap-3">
-            <span className="font-sans text-gray-800">
+            <span className="font-sans text-[22px] font-bold text-gray-800">
               ${item.sellingPrice}
             </span>
-            <span className="thin-line-through text-gray-400">
+            <span className="thin-line-through  text-gray-400">
               ${item.mrpPrice}
             </span>
             <span className="text-primary font-semibold">
